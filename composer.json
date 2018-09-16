@@ -1,0 +1,34 @@
+{
+  "name": "phpbg/dvbpsi",
+  "description": "This is a pure PHP DVB PSI library, developed with performance in mind",
+  "type": "library",
+  "license": "MIT",
+  "keywords": [
+    "mpeg",
+    "mpegts",
+    "dvb",
+    "psi"
+  ],
+  "authors": [
+    {
+      "name": "Samuel CHEMLA",
+      "email": "chemla.samuel@gmail.com",
+      "role": "Developer"
+    }
+  ],
+  "require": {
+    "php": ">=7.0",
+    "myclabs/php-enum": "^1.5",
+    "evenement/evenement": "^3.0",
+    "phpbg/mpegts": "^0.1.0",
+    "ext-calendar": "*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^6.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "PhpBg\\DvbPsi\\": "src"
+    }
+  }
+}
