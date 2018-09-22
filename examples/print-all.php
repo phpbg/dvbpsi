@@ -46,7 +46,7 @@ $dvbPsiParser = \PhpBg\DvbPsi\ParserFactory::create();
 $dvbPsiParser->on('error', function ($e) {
     echo "PSI parser error: {$e->getMessage()}\n";
 });
-$dvbPsiParser->on('pat', function ($pat) {
+$dvbPsiParser->on('pat', function ($pat) use ($dvbPsiParser) {
     echo "PAT\r\n{$pat}\r\n";
 });
 $dvbPsiParser->on('tdt', function ($tdt) {
@@ -54,6 +54,9 @@ $dvbPsiParser->on('tdt', function ($tdt) {
 });
 $dvbPsiParser->on('eit', function ($eit) {
     echo "EIT\r\n{$eit}\n";
+});
+$dvbPsiParser->on('pmt', function ($pmt) {
+    echo "PMT\r\n{$pmt}\n";
 });
 
 // Prepare mpegts parser
@@ -63,6 +66,25 @@ $mpegTsParser->on('error', function ($e) {
 });
 $mpegTsParser->on('pes', function ($pid, $data) use ($dvbPsiParser) {
     $dvbPsiParser->write($pid, $data);
+});
+
+// Register PMT on PAT updates
+$dvbPsiParser->on('pat', function ($pat) use ($dvbPsiParser, $mpegTsParser) {
+    if ($pat->current) {
+        $pmtParser = new \PhpBg\DvbPsi\TableParsers\Pmt();
+        $pids = array_values($pat->programs);
+        $pmtParser->setPids($pids);
+
+        try {
+            $dvbPsiParser->registerTableParser($pmtParser);
+            foreach ($pids as $pid) {
+                $mpegTsParser->addPidFilter(new \PhpBg\MpegTs\Pid($pid));
+            }
+
+        }  catch (Exception $e) {
+            //TODO handle PAT updates properly
+        }
+    }
 });
 
 // Prepare packetizer

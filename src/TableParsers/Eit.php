@@ -41,9 +41,9 @@ class Eit implements TableParserInterface
 
     use Timestamp;
 
-    public function getPid(): int
+    public function getPids(): array
     {
-        return Pid::EIT_ST_CIT;
+        return [Pid::EIT_ST_CIT];
     }
 
     public function getTableIds(): array

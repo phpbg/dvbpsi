@@ -7,7 +7,7 @@ It tries to comply with "Digital Video Broadcasting (DVB) - Specification for Se
 
 The initial goal is to provide parsing for following tables :
  * PAT: done
- * PMT: todo
+ * PMT: ongoing
  * NIT: not yet planned
  * BAT: not yet planned
  * SDT: not yet planned

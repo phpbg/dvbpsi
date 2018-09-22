@@ -35,19 +35,23 @@ class Tdt implements TableParserInterface
 
     use Timestamp;
 
-    public function getPid(): int {
-        return Pid::TDT_TOT_ST;
+    public function getPids(): array
+    {
+        return [Pid::TDT_TOT_ST];
     }
 
-    public function getTableIds(): array {
+    public function getTableIds(): array
+    {
         return [Identifier::TIME_DATE_SECTION];
     }
 
-    public function getEventName(): string {
+    public function getEventName(): string
+    {
         return 'tdt';
     }
 
-    public function parse(int $tableId, string $data, int $currentPointer, int $sectionLength) {
+    public function parse(int $tableId, string $data, int $currentPointer, int $sectionLength)
+    {
         if ($sectionLength !== 5) {
             throw new Exception("Invalid TDT section length: $sectionLength");
         }

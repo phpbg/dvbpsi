@@ -27,18 +27,18 @@
 namespace PhpBg\DvbPsi\Tables;
 
 /**
- * Class Pat (program association table)
+ * Class Pmt (program map table)
  *
- * @see https://en.wikipedia.org/wiki/MPEG_transport_stream#PAT
+ * @see https://en.wikipedia.org/wiki/MPEG_transport_stream#PMT
  * @see https://en.wikipedia.org/wiki/Program-specific_information
  */
-class Pat
+class Pmt
 {
     /**
-     * Transport stream identifier
+     * Program number
      * @var int
      */
-    public $transportStreamId;
+    public $programNumber;
 
     /**
      * current/next indicator. Indicates if data is current in effect or is for future use. If the bit is flagged on, then the data is to be used at the present moment.
@@ -53,25 +53,40 @@ class Pat
     public $version;
 
     /**
-     * @var array Array of program numbers => PMT PIDs
+     * The PID that will hold the program clock reference (may be null if not used)
+     * @var int|null
      */
-    public $programs = [];
+    public $pcrPid;
+
+    /**
+     * TODO find what are those program descriptors...
+     * @var array
+     */
+    public $programDescriptors = [];
+
+    /**
+     * Elementary streams
+     * @var array Array of PID => elementary stream descriptor
+     */
+    public $streams = [];
 
     public function __toString()
     {
-        $buf = sprintf("TransportStreamId: %d (0x%x)\n", $this->transportStreamId, $this->transportStreamId);
+        $buf = sprintf("Program number: %d (0x%x)\n", $this->programNumber, $this->programNumber);
         $buf .= sprintf("Current: %d\n", $this->current);
         $buf .= sprintf("Version: %d (0x%x)\n", $this->version, $this->version);
-        $buf .= "Programs:\n";
-        $buf .= "\tProgram number > PMT PID\n";
-        foreach ($this->programs as $programNumber => $programPid) {
-            if ($programNumber === 0) {
-                $buf .= sprintf("\t%d (0x%x) (NIT) > %d (0x%x)\n", $programNumber, $programNumber, $programPid, $programPid);
-
-            } else {
-                $buf .= sprintf("\t%d (0x%x) > %d (0x%x)\n", $programNumber, $programNumber, $programPid, $programPid);
-            }
+        if ($this->pcrPid === null){
+            $buf .= sprintf("No PCR for this program\n");
+        } else {
+            $buf .= sprintf("PCR PID: %d (0x%x)\n", $this->pcrPid, $this->pcrPid);
         }
+
+        $buf .= "Streams:\n";
+        $buf .= "\tPID > Elementary stream descriptor\n";
+        foreach ($this->streams as $pid => $esDescriptor) {
+            $buf .= sprintf("\t%d (0x%x) > ??? TODO ???\n", $pid, $pid);
+        }
+
         return $buf;
     }
 }

@@ -29,7 +29,7 @@ namespace PhpBg\DvbPsi\Tables;
 use MyCLabs\Enum\Enum;
 
 /**
- * Class TableId
+ * Class Identifier
  *
  * @see Final draft ETSI EN 300 468 V1.13.1 (2012-04), 5.1.3 Coding of PID and table_id fields
  * @see https://en.wikipedia.org/wiki/Program-specific_information#Table_Identifiers
@@ -37,6 +37,10 @@ use MyCLabs\Enum\Enum;
 class Identifier extends Enum
 {
     const PROGRAM_ASSOCIATION_SECTION = 0x00;
+
+    const CONDITIONAL_ACCESS_SECTION = 0x01;
+
+    const PROGRAM_MAP_SECTION = 0x02;
 
     const EVENT_INFORMATION_SECTION_ACTUAL_TS_PRESENT_FOLLOWING = 0x4E;
 

@@ -29,10 +29,10 @@ namespace PhpBg\DvbPsi\TableParsers;
 interface TableParserInterface
 {
     /**
-     * Return the PID that will match this table parser
-     * @return int
+     * Return the PIDs that will match this table parser
+     * @return array
      */
-    public function getPid(): int;
+    public function getPids(): array;
 
     /**
      * Return the table IDs that will match this table parser

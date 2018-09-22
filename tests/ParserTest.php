@@ -27,9 +27,13 @@
 namespace PhpBg\DvbPsi\Tests;
 
 use PhpBg\DvbPsi\ParserFactory;
+use PhpBg\DvbPsi\TableParsers\Pmt;
 use PhpBg\DvbPsi\Tables\Eit;
 use PhpBg\DvbPsi\Tables\Pat;
 
+/**
+ * For all tests use wireshark to inspect data samples and check expected values
+ */
 class ParserTest extends TestCase
 {
 
@@ -65,6 +69,51 @@ class ParserTest extends TestCase
         $this->assertInstanceOf(Pat::class, $incomingPat);
         $this->assertSame(7, count($incomingPat->programs));
         $this->assertSame(16, $incomingPat->version);
+    }
+
+    public function testParsePmt()
+    {
+        /**
+         * This file contains a PMT at PID 0xd2 with:
+         *   program number 0x111
+         *   pcr 0xdc
+         *   6 elementary streams descriptors
+         */
+        $data = $this->getTestFileContent('2_mpegts_pmt_packets.ts');
+
+        $mpegTsParser = new \PhpBg\MpegTs\Parser();
+        $mpegTsParser->filterAllPids = true;
+
+        $dvbPsiParser = ParserFactory::create();
+        $pmtParser = new Pmt();
+        $pmtParser->setPids([0xd2]);
+        $dvbPsiParser->registerTableParser($pmtParser);
+
+        $dvbPsiParser->on('error', function ($e) {
+            $this->assertTrue(false);
+        });
+        $incomingPmt = null;
+        $dvbPsiParser->on('pmt', function ($pmt) use (&$incomingPmt) {
+            if ($incomingPmt !== null) {
+                throw new \Exception('Only one pmt is expected');
+            }
+            $incomingPmt = $pmt;
+        });
+        $mpegTsParser->on('error', function ($e) {
+            $this->assertTrue(false);
+        });
+        $mpegTsParser->on('pes', function ($pid, $data) use ($dvbPsiParser) {
+            $dvbPsiParser->write($pid, $data);
+        });
+
+        $mpegTsParser->write($data);
+
+        $this->assertNotNull($incomingPmt);
+        $this->assertInstanceOf(\PhpBg\DvbPsi\Tables\Pmt::class, $incomingPmt);
+        $this->assertSame(6, count($incomingPmt->streams));
+        $this->assertSame(0, $incomingPmt->version);
+        $this->assertSame(0xdc, $incomingPmt->pcrPid);
+        $this->assertSame(0x111, $incomingPmt->programNumber);
     }
 
     public function testParseTdt()

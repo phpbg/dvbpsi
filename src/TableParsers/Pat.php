@@ -29,24 +29,32 @@ namespace PhpBg\DvbPsi\TableParsers;
 use PhpBg\DvbPsi\Tables\Identifier;
 use PhpBg\MpegTs\Pid;
 
+/**
+ * PAT parser
+ * @see \PhpBg\DvbPsi\Tables\Pat
+ */
 class Pat implements TableParserInterface
 {
 
     use Timestamp;
 
-    public function getPid(): int {
-        return Pid::PAT;
+    public function getPids(): array
+    {
+        return [Pid::PAT];
     }
 
-    public function getTableIds(): array {
+    public function getTableIds(): array
+    {
         return [Identifier::PROGRAM_ASSOCIATION_SECTION];
     }
 
-    public function getEventName(): string {
+    public function getEventName(): string
+    {
         return 'pat';
     }
 
-    public function parse(int $tableId, string $data, int $currentPointer, int $sectionLength) {
+    public function parse(int $tableId, string $data, int $currentPointer, int $sectionLength)
+    {
         $crcOffset = $currentPointer + $sectionLength - 4;
         $syntaxSectionHeadersBin = substr($data, $currentPointer, 5);
         $currentPointer += 5;
@@ -54,8 +62,8 @@ class Pat implements TableParserInterface
 
         $pat = new \PhpBg\DvbPsi\Tables\Pat();
         $pat->transportStreamId = $syntaxSectionHeadersArray['tsid'];
-        $pat->active = $syntaxSectionHeadersArray['headers1'] & 0x01;
-        $pat->version = ($syntaxSectionHeadersArray['headers1'] & 0x3e) >> 1;
+        $pat->current = ($syntaxSectionHeadersArray['headers1'] & 0b1) === 0b1;
+        $pat->version = ($syntaxSectionHeadersArray['headers1'] >> 1) & 0b11111;
 
         while ($currentPointer < $crcOffset) {
             $patDataArray = unpack('n2', substr($data, $currentPointer, 4));

@@ -37,15 +37,19 @@ use PhpBg\DvbPsi\TableParsers\TableParserInterface;
  *     The event receives a single `Exception` argument for the error instance.
  *
  * pat event:
- *     The `pat` event will be emitted when a pat is decoded
+ *     The `pat` event will be emitted when a PAT table is decoded
  *     The event will receive a single argument: PhpBg\DvbPsi\Tables\Pat instance
  *
+ * pmt event:
+ *     The `pmt` event will be emitted when a PMT table is decoded
+ *     The event will receive a single argument: PhpBg\DvbPsi\Tables\Pmt
+ *
  * tdt event:
- *     The `tdt` event will be emitted when a tdt packet is decoded
+ *     The `tdt` event will be emitted when a TDT table is decoded
  *     The event will receive a single int argument: a unix timestamp
  *
  * eit event:
- *     The `eit` event will be emitted when a eit packet is decoded
+ *     The `eit` event will be emitted when an EIT table is decoded
  *     The event will receive a single argument: PhpBg\DvbPsi\Tables\Eit instance
  *
  * TODO other events?
@@ -59,16 +63,19 @@ class Parser extends EventEmitter
      * @param TableParserInterface $parser
      * @throws Exception
      */
-    public function registerTableParser(TableParserInterface $parser) {
-        $pid = $parser->getPid();
-        if (! isset($this->parsers[$pid])) {
-            $this->parsers[$pid] = [];
-        }
-        foreach ($parser->getTableIds() as $tableId) {
-            if (isset($this->parsers[$pid][$tableId])) {
-                throw new Exception("Parser already registered for PID: {$pid} and Table ID: {$tableId}");
+    public function registerTableParser(TableParserInterface $parser)
+    {
+        $pids = $parser->getPids();
+        foreach ($pids as $pid) {
+            if (!isset($this->parsers[$pid])) {
+                $this->parsers[$pid] = [];
             }
-            $this->parsers[$pid][$tableId] = $parser;
+            foreach ($parser->getTableIds() as $tableId) {
+                if (isset($this->parsers[$pid][$tableId])) {
+                    throw new Exception("Parser already registered for PID: {$pid} and Table ID: {$tableId}");
+                }
+                $this->parsers[$pid][$tableId] = $parser;
+            }
         }
     }
 
@@ -111,7 +118,7 @@ class Parser extends EventEmitter
             $currentPointer += 3;
 
             // Parse table
-            if (! isset($this->parsers[$pid][$tableId])) {
+            if (!isset($this->parsers[$pid][$tableId])) {
                 throw new Exception(sprintf("No parser for PID %d (0x%x) table ID %d (0x%x)\n", $pid, $pid, $tableId, $tableId));
             }
             $parsed = $this->parsers[$pid][$tableId]->parse($tableId, $data, $currentPointer, $sectionLength);
