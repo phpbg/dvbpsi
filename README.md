@@ -21,22 +21,39 @@ The initial goal is to provide parsing for following tables :
  
 
 # Requirements
+
 * PHP7+
+* Composer
 
-Installation on ubuntu 16.04:
+Those requirements can be installed on ubuntu 16.04:
 
-    sudo apt install php7.0-cli
+    sudo apt install php7.0-cli composer
 
-Additional you can install xdebug for development purposes:
+Or on windows:
 
-    sudo apt install php-xdebug
+1. http://php.net/downloads.php
+2. https://getcomposer.org/download/
 
+
+# Installation
+
+Simply run:
+
+    composer require phpbg/dvbpsi
 
 # Examples
 
 See `examples/` folder
 
-# Tests
+
+# Development
+
+
+You can install [xdebug](https://xdebug.org/download.php) for development purposes:
+
+    sudo apt install php-xdebug
+
+
 To run unit tests launch:
 
     php vendor/phpunit/phpunit/phpunit -c phpunit.xml
