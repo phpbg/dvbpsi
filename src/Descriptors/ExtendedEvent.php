@@ -26,12 +26,15 @@
 
 namespace PhpBg\DvbPsi\Descriptors;
 
+use PhpBg\DvbPsi\TableParsers\Text;
+
 /**
  * Class ExtendedEvent
  * @see Final draft ETSI EN 300 468 V1.13.1 (2012-04), 6.2.15 Extended event descriptor
  */
 class ExtendedEvent
 {
+    use Text;
 
     public $descriptorNumber;
     public $lastNumber;
@@ -54,16 +57,18 @@ class ExtendedEvent
         while ($pointer < $end) {
             $itemDescLen = unpack('C', substr($data, $pointer, 1))[1];
             $pointer += 1;
-            $itemDesc = substr($data, $pointer, $itemDescLen);
+            $itemDesc = $this->toUtf8String(substr($data, $pointer, $itemDescLen));
             $pointer += $itemDescLen;
             $itemLen = unpack('C', substr($data, $pointer, 1))[1];
             $pointer += 1;
-            $this->items[$itemDesc] = substr($data, $pointer, $itemLen);
+            $this->items[$itemDesc] = $this->toUtf8String(substr($data, $pointer, $itemLen));
             $pointer += $itemLen;
         }
         $textLen = unpack('C', substr($data, $pointer, 1))[1];
         $pointer += 1;
-        $this->text = substr($data, $pointer, $textLen);
+        if ($textLen > 0) {
+            $this->text = $this->toUtf8String(substr($data, $pointer, $textLen));
+        }
     }
 
     public function __toString()

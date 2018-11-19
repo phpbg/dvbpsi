@@ -26,12 +26,16 @@
 
 namespace PhpBg\DvbPsi\Descriptors;
 
+use PhpBg\DvbPsi\TableParsers\Text;
+
 /**
  * Class ShortEvent
  * @see Final draft ETSI EN 300 468 V1.13.1 (2012-04), 6.2.37 Short event descriptor
  */
 class ShortEvent
 {
+    use Text;
+
     public $language;
     public $eventName;
     public $text;
@@ -43,11 +47,15 @@ class ShortEvent
         $pointer += 3;
         $nameLen = unpack('C', substr($data, $pointer, 1))[1];
         $pointer += 1;
-        $this->eventName = substr($data, $pointer, $nameLen);
+        if ($nameLen > 0) {
+            $this->eventName = $this->toUtf8String(substr($data, $pointer, $nameLen));
+        }
         $pointer += $nameLen;
         $textLen = unpack('C', substr($data, $pointer, 1))[1];
         $pointer += 1;
-        $this->text = substr($data, $pointer, $textLen);
+        if ($textLen > 0) {
+            $this->text = $this->toUtf8String(substr($data, $pointer, $textLen));
+        }
     }
 
     public function __toString()
