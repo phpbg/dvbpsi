@@ -28,8 +28,8 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 // Check args and open files
 if (count($argv) !== 2) {
-    echo "Dump all PSI Tables present in TS file\r\n";
-    echo "Usage: php print-all.php <infile>\r\n";
+    echo "Non redundant dump of all PSI Tables present in TS file\r\n";
+    echo "Usage: php print-with-context.php <infile>\r\n";
     return;
 }
 if (!is_file($argv[1])) {
@@ -41,22 +41,33 @@ if ($inFileHandle === false) {
     throw new Exception();
 }
 
+// Global and stream context
+$globalContext = new \PhpBg\DvbPsi\Context\GlobalContext();
+$streamContext = new \PhpBg\DvbPsi\Context\StreamContext();
+$streamContext->on('update', function () use ($streamContext) {
+    echo "Stream context update:\n";
+    echo $streamContext;
+});
+$streamContext->on('time-update', function () use ($streamContext) {
+    echo "Time update: " . date('Y-m-d H:i:s', $streamContext->tdtTimestamp) . "\n";
+});
+
 // Prepare dvb psi parser
 $dvbPsiParser = \PhpBg\DvbPsi\ParserFactory::create();
 $dvbPsiParser->on('error', function ($e) {
     echo "PSI parser error: {$e->getMessage()}\n";
 });
-$dvbPsiParser->on('pat', function ($pat) use ($dvbPsiParser) {
-    echo "PAT\r\n{$pat}\r\n";
+$dvbPsiParser->on('pat', function ($pat) use ($streamContext) {
+    $streamContext->addPat($pat);
 });
-$dvbPsiParser->on('tdt', function ($tdt) {
-    echo "TDT: {$tdt}\n";
+$dvbPsiParser->on('tdt', function ($tdt) use ($streamContext) {
+    $streamContext->setTdtTimestamp($tdt);
 });
-$dvbPsiParser->on('eit', function ($eit) {
-    echo "EIT\r\n{$eit}\n";
+$dvbPsiParser->on('eit', function ($eit) use ($globalContext) {
+    $globalContext->addEit($eit);
 });
-$dvbPsiParser->on('pmt', function ($pmt) {
-    echo "PMT\r\n{$pmt}\n";
+$dvbPsiParser->on('pmt', function ($pmt) use ($streamContext) {
+    $streamContext->addPmt($pmt);
 });
 
 // Prepare mpegts parser
@@ -69,21 +80,18 @@ $mpegTsParser->on('pes', function ($pid, $data) use ($dvbPsiParser) {
 });
 
 // Register PMT on PAT updates
-$dvbPsiParser->on('pat', function ($pat) use ($dvbPsiParser, $mpegTsParser) {
-    if ($pat->current) {
-        $pmtParser = new \PhpBg\DvbPsi\TableParsers\Pmt();
-        $pids = array_values($pat->programs);
-        $pmtParser->setPids($pids);
-
-        try {
-            $dvbPsiParser->registerTableParser($pmtParser);
-            foreach ($pids as $pid) {
-                $mpegTsParser->addPidFilter(new \PhpBg\MpegTs\Pid($pid));
-            }
-
-        }  catch (Exception $e) {
-            //TODO handle PAT updates properly
-        }
+$oldPat = null;
+$streamContext->on('pat-update', function () use ($streamContext, $dvbPsiParser, $mpegTsParser, &$oldPat) {
+    $pmtParser = new \PhpBg\DvbPsi\TableParsers\Pmt();
+    $newPids = array_values($streamContext->pat->programs);
+    $pmtParser->setPids($newPids);
+    $dvbPsiParser->registerTableParser($pmtParser);
+    $oldPids = isset($oldPat) ? array_values($oldPat->programs) : [];
+    foreach ($oldPids as $pid) {
+        $mpegTsParser->removePidFilter(new \PhpBg\MpegTs\Pid($pid));
+    }
+    foreach ($newPids as $pid) {
+        $mpegTsParser->addPidFilter(new \PhpBg\MpegTs\Pid($pid));
     }
 });
 
@@ -106,5 +114,9 @@ while (!feof($inFileHandle)) {
 }
 
 fclose($inFileHandle);
+
+// We have no way to know when a full aggregated EIT table is available.
+// TODO try to find a way to print $globalContext when a full aggregated EIT table is available.
+echo $globalContext;
 
 echo "Done\r\n";
