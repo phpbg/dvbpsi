@@ -11,7 +11,7 @@ The initial goal is to provide parsing for following tables :
  * NIT: not yet planned
  * BAT: not yet planned
  * SDT: not yet planned
- * EIT: mostly (missing some descriptors and proper encoding support)
+ * EIT: mostly (missing some descriptors)
  * TDT: done
  * TOT: todo
  * RST: not yet planned
