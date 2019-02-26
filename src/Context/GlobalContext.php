@@ -67,7 +67,8 @@ class GlobalContext extends EventEmitter
      *
      * @return array
      */
-    public function getAllEvents() {
+    public function getAllEvents()
+    {
         return $this->eitByNetworks;
     }
 
