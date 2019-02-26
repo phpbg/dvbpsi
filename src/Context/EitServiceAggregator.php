@@ -26,8 +26,11 @@
 
 namespace PhpBg\DvbPsi\Context;
 
+use PhpBg\DvbPsi\Exception;
 use PhpBg\DvbPsi\Tables\Eit;
+use PhpBg\DvbPsi\Tables\EitEvent;
 use PhpBg\DvbPsi\Tables\Identifier;
+use PhpBg\DvbPsi\Tables\Values\EitRunningStatus;
 
 /**
  * Class EitServiceAggregator
@@ -39,12 +42,20 @@ use PhpBg\DvbPsi\Tables\Identifier;
  */
 class EitServiceAggregator
 {
+    public $originalNetworkId;
+    public $transportStreamId;
+    public $serviceId;
+
     protected $followingVersion;
-    protected $scheduledVersion;
+    protected $scheduledVersions = [];
     protected $followingEvents;
-    protected $scheduledEvents;
+    protected $scheduledEvents = [];
     protected $followingSections;
-    protected $scheduledSections;
+    protected $scheduledSections = [];
+
+    protected $firstTableId;
+    protected $lastTableId;
+    protected $tablesLastSectionNumber = [];
 
     /**
      * Aggregate a new EIT
@@ -54,11 +65,27 @@ class EitServiceAggregator
      */
     public function add(Eit $eit): bool
     {
+        if (!isset($this->originalNetworkId)) {
+            $this->originalNetworkId = $eit->originalNetworkId;
+            $this->transportStreamId = $eit->transportStreamId;
+            $this->serviceId = $eit->serviceId;
+        } else {
+            if ($this->originalNetworkId !== $eit->originalNetworkId) {
+                throw new Exception("Event and aggregator mismatch");
+            }
+            if ($this->transportStreamId !== $eit->transportStreamId) {
+                throw new Exception("Event and aggregator mismatch");
+            }
+            if ($this->serviceId !== $eit->serviceId) {
+                throw new Exception("Event and aggregator mismatch");
+            }
+        }
         if ($eit->tableId === Identifier::EVENT_INFORMATION_SECTION_ACTUAL_TS_PRESENT_FOLLOWING || $eit->tableId === Identifier::EVENT_INFORMATION_SECTION_OTHER_TS_PRESENT_FOLLOWING) {
             if (!isset($this->followingVersion) || $this->followingVersion < $eit->versionNumber || ($this->followingVersion !== 0 && $eit->versionNumber === 0)) {
                 //New following version
                 $this->followingVersion = $eit->versionNumber;
                 $this->followingEvents = [];
+                $this->followingSections = [];
             }
 
             if (!isset($this->followingSections[$eit->sectionNumber])) {
@@ -67,19 +94,85 @@ class EitServiceAggregator
                 return true;
             }
         } else {
-            if (!isset($this->scheduledVersion) || $this->scheduledVersion < $eit->versionNumber || ($this->scheduledVersion !== 0 && $eit->versionNumber === 0)) {
+            // version are valid per table id
+            if (!isset($this->scheduledVersions[$eit->tableId]) || $this->scheduledVersions[$eit->tableId] < $eit->versionNumber || ($this->scheduledVersions[$eit->tableId] !== 0 && $eit->versionNumber === 0)) {
                 //New scheduled version
-                $this->scheduledVersion = $eit->versionNumber;
-                $this->scheduledEvents = [];
+                $this->scheduledVersions[$eit->tableId] = $eit->versionNumber;
+                $this->scheduledEvents[$eit->tableId] = [];
+                $this->scheduledSections[$eit->tableId] = [];
+
+                if (in_array($eit->tableId, Identifier::EVENT_INFORMATION_SECTION_ACTUAL_TS_PRESENT_SCHEDULE)) {
+                    $this->firstTableId = 0x50;
+                } else {
+                    $this->firstTableId = 0x60;
+                }
+                $this->lastTableId = $eit->lastTableId;
+                $this->tablesLastSectionNumber = [];
             }
 
-            if (!isset($this->scheduledSections[$eit->sectionNumber])) {
-                $this->scheduledSections[$eit->sectionNumber] = true;
-                $this->scheduledEvents = array_merge($this->scheduledEvents, $eit->events);
+            if (!isset($this->tablesLastSectionNumber[$eit->tableId])) {
+                $this->tablesLastSectionNumber[$eit->tableId] = $eit->lastSectionNumber;
+            }
+
+            if (!isset($this->scheduledSections[$eit->tableId][$eit->sectionNumber])) {
+                $this->scheduledSections[$eit->tableId][$eit->sectionNumber] = true;
+                $this->scheduledEvents[$eit->tableId] = array_merge($this->scheduledEvents[$eit->tableId], $eit->events);
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * Return current running event
+     * @return EitEvent|null
+     */
+    public function getRunningEvent()
+    {
+        if (empty($this->followingEvents)) {
+            return null;
+        }
+        $runningStatus = EitRunningStatus::RUNNING();
+        foreach ($this->followingEvents as $eitevent) {
+            /**
+             * @var EitEvent $eit
+             */
+            if ($runningStatus->equals($eitevent->getRunningStatus())) {
+                return $eitevent;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Return the percent of aggregated events
+     * NB: this number may be inaccurate because the spec allows for gap in numbering.
+     * "the sub_table may be structured as a number of segments. Within each segment the section_number shall increment by 1 with each additional section, but a gap in numbering is permitted between the last section of a segment and the first section of the adjacent segment."
+     *
+     * @return int
+     */
+    public function getStat()
+    {
+        if (!isset($this->firstTableId)) {
+            return 0;
+        }
+        $required = 0;
+        $have = 0;
+        for ($tableId = $this->firstTableId; $tableId <= $this->lastTableId; $tableId++) {
+            if (!isset($this->tablesLastSectionNumber[$tableId])) {
+                // if last section number is unknown we fake the maximum value
+                // this is inaccurate but there's nothing better we can do
+                $required += 256;
+                continue;
+            }
+            // Required is the last section number plus 1 because numbering starts at zero
+            $required += $this->tablesLastSectionNumber[$tableId] + 1;
+            $have += count($this->scheduledSections[$tableId]);
+        }
+        if ($required == 0) {
+            return 0;
+        }
+        return round(100.0 * $have / $required);
     }
 
     public function __toString()
@@ -96,9 +189,30 @@ class EitServiceAggregator
 
         if (!empty($this->scheduledEvents)) {
             $str .= "Scheduled events:\n";
-            foreach ($this->scheduledEvents as $eventId => $event) {
-                $str .= sprintf("Event: %d (0x%x)\n", $eventId, $eventId);
-                $str .= (string)$event;
+            foreach ($this->scheduledEvents as $tableId => $events) {
+                $str .= sprintf("From table: %d (0x%x)\n", $tableId, $tableId);
+                foreach ($events as $eventId => $event) {
+                    $str .= sprintf("Event: %d (0x%x)\n", $eventId, $eventId);
+                    $str .= (string)$event;
+                }
+            }
+        }
+
+        $str .= "Summary:\n";
+        $str .= sprintf("\tTransport stream ID: %d (0x%x)\n", $this->transportStreamId, $this->transportStreamId);
+        $str .= sprintf("\tNetwork ID: %d (0x%x)\n", $this->originalNetworkId, $this->originalNetworkId);
+        $str .= sprintf("\tService id: %d (0x%x)\n", $this->serviceId, $this->serviceId);
+        $stat = $this->getStat();
+        $str .= "\t{$stat}% of the events have been collected\n";
+
+        $currentEvent = $this->getRunningEvent();
+        if (!isset($currentEvent)) {
+            $str .= "\tNo current running event collected\n";
+        } else {
+            $text = $currentEvent->getShortEventText();
+            $str .= "\tCurrent running event: {$text}\n";
+            if (empty($text)) {
+                $str .= (string)$currentEvent;
             }
         }
 

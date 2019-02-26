@@ -30,6 +30,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 if (count($argv) !== 2) {
     echo "Non redundant dump of all PSI Tables present in TS file\r\n";
     echo "Usage: php print-with-context.php <infile>\r\n";
+    echo "Try piping with 'grep Summary -A 5' to get EIT statistics only\r\n";
     return;
 }
 if (!is_file($argv[1])) {

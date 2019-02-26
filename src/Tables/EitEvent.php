@@ -26,6 +26,9 @@
 
 namespace PhpBg\DvbPsi\Tables;
 
+use PhpBg\DvbPsi\Descriptors\ShortEvent;
+use PhpBg\DvbPsi\Tables\Values\EitRunningStatus;
+
 class EitEvent
 {
     /**
@@ -66,12 +69,34 @@ class EitEvent
 
     public $descriptors = [];
 
+    public function getRunningStatus(): EitRunningStatus {
+        if (! isset($this->runningStatus)) {
+            return EitRunningStatus::UNDEFINED();
+        }
+        return new EitRunningStatus($this->runningStatus);
+    }
+
+    /**
+     * This is a convenient method to get text from short event descriptor (if any)
+     * @return null|string
+     */
+    public function getShortEventText() {
+        foreach ($this->descriptors as $descriptor) {
+            if (! $descriptor instanceof ShortEvent) {
+                continue;
+            }
+            return $descriptor->eventName . ' ' . $descriptor->text;
+        }
+        return null;
+    }
+
     public function __toString()
     {
         $str = sprintf("Event id: %d (0x%x)\n", $this->eventId, $this->eventId);
         $str .= sprintf("Start %d (%s)\n", $this->startTimestamp, date('Y-m-d H:i:s', $this->startTimestamp));
         $str .= sprintf("Duration %d (until %s)\n", $this->duration, date('Y-m-d H:i:s', $this->startTimestamp + $this->duration));
-        //TODO display running status
+        $runningStatus = $this->getRunningStatus();
+        $str .= "Running status: " . $runningStatus->getKey() . "\n";
         $str .= sprintf("Scrambled: %s\n", $this->freeCaMode === 1 ? 'yes' : 'no');
         foreach ($this->descriptors as $descriptor) {
             $str .= "{$descriptor}\n";
