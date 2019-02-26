@@ -79,6 +79,15 @@ class Parser extends EventEmitter
         }
     }
 
+    /**
+     * Return PIDs that have at least one registered parser
+     * @return array
+     */
+    public function getRegisteredPids(): array
+    {
+        return array_keys($this->parsers);
+    }
+
     public function write(int $pid, string $data)
     {
         try {

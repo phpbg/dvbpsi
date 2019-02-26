@@ -26,8 +26,10 @@
 
 namespace PhpBg\DvbPsi\Tests;
 
+use PhpBg\DvbPsi\Parser;
 use PhpBg\DvbPsi\ParserFactory;
 use PhpBg\DvbPsi\TableParsers\Pmt;
+use PhpBg\DvbPsi\TableParsers\TableParserInterface;
 use PhpBg\DvbPsi\Tables\Eit;
 use PhpBg\DvbPsi\Tables\Pat;
 
@@ -186,5 +188,26 @@ class ParserTest extends TestCase
         $this->assertSame(16, $incomingEit->segmentLastSectionNumber);
         $this->assertSame(80, $incomingEit->lastTableId);
         $this->assertSame(9, count($incomingEit->events));
+    }
+
+    /**
+     * @dataProvider getRegisteredPidsDatasource
+     */
+    public function testGetRegisteredPids(TableParserInterface $tableParser)
+    {
+        $parser = new Parser();
+        $this->assertEmpty($parser->getRegisteredPids());
+        $parser->registerTableParser($tableParser);
+        $this->assertSame(count($tableParser->getPids()), count($parser->getRegisteredPids()));
+        $this->assertEquals($tableParser->getPids(), $parser->getRegisteredPids());
+    }
+
+    public function getRegisteredPidsDatasource()
+    {
+        return [
+            [new \PhpBg\DvbPsi\TableParsers\Pat()],
+            [new \PhpBg\DvbPsi\TableParsers\Eit()],
+            [new \PhpBg\DvbPsi\TableParsers\Tdt()]
+        ];
     }
 }
