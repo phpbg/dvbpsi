@@ -32,11 +32,10 @@ use PhpBg\DvbPsi\Tables\Eit;
 
 class GlobalContext extends EventEmitter
 {
-    protected $eitByNetworks;
+    protected $eitByNetworks = [];
 
     public function addEit(Eit $eit)
     {
-
         if (!isset($this->eitByNetworks[$eit->originalNetworkId])) {
             $this->eitByNetworks[$eit->originalNetworkId] = [];
         }
@@ -54,6 +53,22 @@ class GlobalContext extends EventEmitter
         if ($update) {
             $this->emit('partial-update');
         }
+    }
+
+    /**
+     * Return an array of EitServiceAggregator, grouped by network ID, transport stream ID and service ID
+     * E.g. [
+     *          <network id> => [
+     *              <transport stream id> => [
+     *                  <service id> => <EitServiceAggregator instance>
+     *              ]
+     *          ]
+     *      ]
+     *
+     * @return array
+     */
+    public function getAllEvents() {
+        return $this->eitByNetworks;
     }
 
     public function __toString()
