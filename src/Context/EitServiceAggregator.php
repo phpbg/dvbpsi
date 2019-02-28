@@ -46,11 +46,11 @@ class EitServiceAggregator
     public $transportStreamId;
     public $serviceId;
 
-    protected $followingVersion;
+    protected $followingVersion = null;
     protected $scheduledVersions = [];
-    protected $followingEvents;
+    protected $followingEvents = [];
     protected $scheduledEvents = [];
-    protected $followingSections;
+    protected $followingSections = [];
     protected $scheduledSections = [];
 
     protected $firstTableId;
@@ -59,9 +59,10 @@ class EitServiceAggregator
 
     /**
      * Aggregate a new EIT
-     * Return true if the EIT was unknown and has been aggregated, false otherwise
      *
      * @param Eit $eit
+     * @throws Exception
+     * @return bool Return true if the EIT was unknown and has been aggregated, false otherwise
      */
     public function add(Eit $eit): bool
     {
@@ -125,6 +126,7 @@ class EitServiceAggregator
 
     /**
      * Return current running event
+     *
      * @return EitEvent|null
      */
     public function getRunningEvent()
@@ -142,6 +144,31 @@ class EitServiceAggregator
             }
         }
         return null;
+    }
+
+    /**
+     * Return all following events
+     * Note that there is generally 2 events per channel, one running, and the other one coming
+     *
+     * @return EitEvent[]
+     */
+    public function getFollowingEvents(): array
+    {
+        return $this->followingEvents;
+    }
+
+    /**
+     * Return all scheduled events
+     *
+     * @return EitEvent[]
+     */
+    public function getScheduledEvents(): array
+    {
+        $events = [];
+        foreach ($this->scheduledEvents as $eitEvents) {
+            $events = array_merge($events, $eitEvents);
+        }
+        return $events;
     }
 
     /**
