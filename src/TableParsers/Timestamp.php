@@ -34,7 +34,7 @@ trait Timestamp
      * @param $mjdUtcBinaryString
      * @return int Unix timestamp
      */
-    protected function getTimestampFromMjdUtc($mjdUtcBinaryString)
+    protected function getTimestampFromMjdUtc($mjdUtcBinaryString): int
     {
         // Modified Julian Day https://en.wikipedia.org/wiki/Julian_day
         $mjdStr = substr($mjdUtcBinaryString, 0, 2);
@@ -52,7 +52,7 @@ trait Timestamp
         // Decode hh:ii:ss
         $hhStr = substr($mjdUtcBinaryString, 2, 3);
         $timestamp += $this->getTimestampFromUtcBcd($hhStr);
-        return $timestamp;
+        return (int)$timestamp;
     }
 
     /**
@@ -61,7 +61,7 @@ trait Timestamp
      * @param $utcBcdBinaryString
      * @return int Unix timestamp
      */
-    protected function getTimestampFromUtcBcd($utcBcdBinaryString)
+    protected function getTimestampFromUtcBcd($utcBcdBinaryString): int
     {
         $hisArray = unpack('C3', $utcBcdBinaryString);
         $hh = $hisArray[1];
@@ -72,6 +72,6 @@ trait Timestamp
         $s = 10 * (($ss & 0xf0) >> 4) + ($ss & 0x0f);
 
         $timestamp = 3600 * $h + 60 * $i + $s;
-        return $timestamp;
+        return (int)$timestamp;
     }
 }

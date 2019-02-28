@@ -146,7 +146,7 @@ class ParserTest extends TestCase
 
         $mpegTsParser->write($data);
 
-        $this->assertSame(1525979334, $incomingTdt);
+        $this->assertSame(1526065734, $incomingTdt);
     }
 
     public function testParseEit()
