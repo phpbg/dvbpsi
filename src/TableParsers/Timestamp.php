@@ -44,7 +44,10 @@ trait Timestamp
         $jd = $mjd + 2400000.5;
 
         // Translate to UNIX timestamp
-        $timestamp = jdtounix($jd);
+        // Do not use jdtounix() because jdtounix() only accept integers, not floats
+        // 2440587.5 is the julian day at 1/1/1970 0:00 UTC
+        // 86400 is the number of seconds in a day
+        $timestamp = ($jd - 2440587.5) * 86400;
 
         // Decode hh:ii:ss
         $hhStr = substr($mjdUtcBinaryString, 2, 3);
