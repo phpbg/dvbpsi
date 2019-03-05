@@ -73,15 +73,15 @@ class Eit implements TableParserInterface
         $eit->serviceId = unpack('n', substr($data, $currentPointer, 2))[1];
         $currentPointer += 2;
 
-        $tmp = unpack('C', substr($data, $currentPointer, 1))[1];
+        $tmp = unpack('C', $data[$currentPointer])[1];
         $eit->versionNumber = ($tmp >> 1) & 0x1f;
         $eit->currentNextIndicator = $tmp & 0x01;
         $currentPointer += 1;
 
-        $eit->sectionNumber = unpack('C', substr($data, $currentPointer, 1))[1];
+        $eit->sectionNumber = unpack('C', $data[$currentPointer])[1];
         $currentPointer += 1;
 
-        $eit->lastSectionNumber = unpack('C', substr($data, $currentPointer, 1))[1];
+        $eit->lastSectionNumber = unpack('C', $data[$currentPointer])[1];
         $currentPointer += 1;
 
         $eit->transportStreamId = unpack('n', substr($data, $currentPointer, 2))[1];
@@ -90,10 +90,10 @@ class Eit implements TableParserInterface
         $eit->originalNetworkId = unpack('n', substr($data, $currentPointer, 2))[1];
         $currentPointer += 2;
 
-        $eit->segmentLastSectionNumber = unpack('C', substr($data, $currentPointer, 1))[1];
+        $eit->segmentLastSectionNumber = unpack('C', $data[$currentPointer])[1];
         $currentPointer += 1;
 
-        $eit->lastTableId = unpack('C', substr($data, $currentPointer, 1))[1];
+        $eit->lastTableId = unpack('C', $data[$currentPointer])[1];
         $currentPointer += 1;
 
         while ($currentPointer < $crcOffset) {
@@ -118,9 +118,9 @@ class Eit implements TableParserInterface
             $descriptorsLoopLength = $tmp & 0xfff;
             $descriptorsEnd = $currentPointer + $descriptorsLoopLength;
             while ($currentPointer < $descriptorsEnd) {
-                $descriptorTag = unpack('C', substr($data, $currentPointer, 1))[1];
+                $descriptorTag = unpack('C', $data[$currentPointer])[1];
                 $currentPointer += 1;
-                $descriptorLen = unpack('C', substr($data, $currentPointer, 1))[1];
+                $descriptorLen = unpack('C', $data[$currentPointer])[1];
                 $currentPointer += 1;
                 $descriptorData = substr($data, $currentPointer, $descriptorLen);
                 $currentPointer += $descriptorLen;
