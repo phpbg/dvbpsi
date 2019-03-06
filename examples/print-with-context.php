@@ -88,14 +88,14 @@ $streamContext->on('pat-update', function ($newPat, $oldPat) use ($dvbPsiParser,
     $dvbPsiParser->registerTableParser($pmtParser);
     $oldPids = isset($oldPat) ? array_values($oldPat->programs) : [];
     foreach ($oldPids as $pid) {
-        if ($pid == 0x10) {
+        if ($pid == \PhpBg\MpegTs\Pid::NIT_ST) {
             // This is NIT (PAT program 0), we don't support it yet
             continue;
         }
         $mpegTsParser->removePidFilter(new \PhpBg\MpegTs\Pid($pid));
     }
     foreach ($newPids as $pid) {
-        if ($pid == 0x10) {
+        if ($pid == \PhpBg\MpegTs\Pid::NIT_ST) {
             // This is NIT (PAT program 0), we don't support it yet
             continue;
         }

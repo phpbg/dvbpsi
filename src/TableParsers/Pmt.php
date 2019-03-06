@@ -27,6 +27,7 @@
 namespace PhpBg\DvbPsi\TableParsers;
 
 use PhpBg\DvbPsi\Tables\Identifier;
+use PhpBg\MpegTs\Pid;
 
 /**
  * PMT parser
@@ -45,7 +46,14 @@ class Pmt implements TableParserInterface
      */
     public function setPids(array $pids)
     {
+        // PAT programs generally come with NIT PID
+        // Don't register NIT PID as a PMT PID
+        $nitPidIndex = array_search(Pid::NIT_ST, $pids);
+        if ($nitPidIndex !== false) {
+            unset($pids[$nitPidIndex]);
+        }
         $this->pids = $pids;
+
     }
 
     public function getPids(): array
