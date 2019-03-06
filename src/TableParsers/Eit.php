@@ -32,6 +32,7 @@ use PhpBg\DvbPsi\Descriptors\ExtendedEvent;
 use PhpBg\DvbPsi\Descriptors\ParentalRating;
 use PhpBg\DvbPsi\Descriptors\ShortEvent;
 use PhpBg\DvbPsi\Descriptors\Identifier as DescriptorsIdentifier;
+use PhpBg\DvbPsi\Exception;
 use PhpBg\DvbPsi\Tables\EitEvent;
 use PhpBg\DvbPsi\Tables\Identifier;
 use PhpBg\MpegTs\Pid;
@@ -96,6 +97,7 @@ class Eit implements TableParserInterface
         $eit->lastTableId = unpack('C', $data[$currentPointer])[1];
         $currentPointer += 1;
 
+        $dataLen = strlen($data);
         while ($currentPointer < $crcOffset) {
             $eitEvent = new EitEvent();
 
@@ -118,6 +120,13 @@ class Eit implements TableParserInterface
             $descriptorsLoopLength = $tmp & 0xfff;
             $descriptorsEnd = $currentPointer + $descriptorsLoopLength;
             while ($currentPointer < $descriptorsEnd) {
+                // Provide minimal safeguards
+                if ($currentPointer >= $dataLen) {
+                    throw new Exception("Parse overflow (data ength exceeded)");
+                }
+                if ($currentPointer >= $crcOffset) {
+                    throw new Exception("Parse overflow (CRC reached)");
+                }
                 $descriptorTag = unpack('C', $data[$currentPointer])[1];
                 $currentPointer += 1;
                 $descriptorLen = unpack('C', $data[$currentPointer])[1];
@@ -152,7 +161,6 @@ class Eit implements TableParserInterface
 
                     default:
                         echo sprintf("TODO unhandled descriptor tag : 0x%x\n", $descriptorTag);
-                        var_dump($descriptorData);
                 }
 
             }
