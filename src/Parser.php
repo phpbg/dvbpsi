@@ -52,8 +52,11 @@ use PhpBg\DvbPsi\TableParsers\TableParserInterface;
  *     The `eit` event will be emitted when an EIT table is decoded
  *     The event will receive a single argument: PhpBg\DvbPsi\Tables\Eit instance
  *
- * parserChange event:
- *     The `parserChange` will be emitted when a parser is added or removed
+ * parserAdd event:
+ *     The `parserAdd` will be emitted when a parser is added
+ *
+ * parserRemove event:
+ *     The `parserRemove` will be emitted when a parser is removed
  *
  * TODO other events?
  */
@@ -69,18 +72,20 @@ class Parser extends EventEmitter
     public function registerTableParser(TableParserInterface $parser)
     {
         $pids = $parser->getPids();
+        $pidsAdded = [];
         foreach ($pids as $pid) {
             if (!isset($this->parsers[$pid])) {
                 $this->parsers[$pid] = [];
+                $pidsAdded[] = $pid;
             }
             foreach ($parser->getTableIds() as $tableId) {
                 if (isset($this->parsers[$pid][$tableId])) {
                     throw new Exception("Parser already registered for PID: {$pid} and Table ID: {$tableId}");
                 }
                 $this->parsers[$pid][$tableId] = $parser;
-                $this->emit('parserChange');
             }
         }
+        $this->emit('parserAdd', [$parser, $pidsAdded]);
     }
 
     /**
@@ -89,6 +94,7 @@ class Parser extends EventEmitter
      */
     public function unregisterTableParser(TableParserInterface $parser) {
         $pids = $parser->getPids();
+        $pidsRemoved = [];
         foreach ($pids as $pid) {
             foreach ($parser->getTableIds() as $tableId) {
                 if ($this->parsers[$pid][$tableId] == $parser) {
@@ -97,9 +103,10 @@ class Parser extends EventEmitter
             }
             if (empty($this->parsers[$pid])) {
                 unset($this->parsers[$pid]);
+                $pidsRemoved[] = $pid;
             }
         }
-        $this->emit('parserChange');
+        $this->emit('parserRemove', [$parser, $pidsRemoved]);
     }
 
     /**
