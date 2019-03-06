@@ -81,17 +81,24 @@ $mpegTsParser->on('pes', function ($pid, $data) use ($dvbPsiParser) {
 });
 
 // Register PMT on PAT updates
-$oldPat = null;
-$streamContext->on('pat-update', function () use ($streamContext, $dvbPsiParser, $mpegTsParser, &$oldPat) {
+$streamContext->on('pat-update', function ($newPat, $oldPat) use ($dvbPsiParser, $mpegTsParser) {
     $pmtParser = new \PhpBg\DvbPsi\TableParsers\Pmt();
-    $newPids = array_values($streamContext->pat->programs);
+    $newPids = array_values($newPat->programs);
     $pmtParser->setPids($newPids);
     $dvbPsiParser->registerTableParser($pmtParser);
     $oldPids = isset($oldPat) ? array_values($oldPat->programs) : [];
     foreach ($oldPids as $pid) {
+        if ($pid == 0x10) {
+            // This is NIT (PAT program 0), we don't support it yet
+            continue;
+        }
         $mpegTsParser->removePidFilter(new \PhpBg\MpegTs\Pid($pid));
     }
     foreach ($newPids as $pid) {
+        if ($pid == 0x10) {
+            // This is NIT (PAT program 0), we don't support it yet
+            continue;
+        }
         $mpegTsParser->addPidFilter(new \PhpBg\MpegTs\Pid($pid));
     }
 });

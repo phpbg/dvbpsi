@@ -52,9 +52,10 @@ class StreamContext extends EventEmitter
     public function addPat(Pat $pat)
     {
         if (!isset($this->pat) || $this->pat->version < $pat->version || ($this->pat->version !== 0 && $pat->version === 0)) {
+            $oldPat = $this->pat;
             $this->pat = $pat;
             $this->pmts = [];
-            $this->emit('pat-update');
+            $this->emit('pat-update', [$this->pat, $oldPat]);
         }
     }
 

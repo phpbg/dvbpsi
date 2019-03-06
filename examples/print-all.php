@@ -68,25 +68,6 @@ $mpegTsParser->on('pes', function ($pid, $data) use ($dvbPsiParser) {
     $dvbPsiParser->write($pid, $data);
 });
 
-// Register PMT on PAT updates
-$dvbPsiParser->on('pat', function ($pat) use ($dvbPsiParser, $mpegTsParser) {
-    if ($pat->current) {
-        $pmtParser = new \PhpBg\DvbPsi\TableParsers\Pmt();
-        $pids = array_values($pat->programs);
-        $pmtParser->setPids($pids);
-
-        try {
-            $dvbPsiParser->registerTableParser($pmtParser);
-            foreach ($pids as $pid) {
-                $mpegTsParser->addPidFilter(new \PhpBg\MpegTs\Pid($pid));
-            }
-
-        }  catch (Exception $e) {
-            //TODO handle PAT updates properly
-        }
-    }
-});
-
 // Prepare packetizer
 $packetizer = new \PhpBg\MpegTs\Packetizer();
 $packetizer->on('error', function ($e) {
@@ -94,6 +75,36 @@ $packetizer->on('error', function ($e) {
 });
 $packetizer->on('data', function ($data) use ($mpegTsParser) {
     $mpegTsParser->write($data);
+});
+
+// Register PMT on PAT updates
+$streamContext = new \PhpBg\DvbPsi\Context\StreamContext();
+$streamContext->on('pat-update', function ($newPat, $oldPat) use ($dvbPsiParser, $mpegTsParser) {
+    $pmtParser = new \PhpBg\DvbPsi\TableParsers\Pmt();
+    $newPids = array_values($newPat->programs);
+    $pmtParser->setPids($newPids);
+    $dvbPsiParser->registerTableParser($pmtParser);
+    $oldPids = isset($oldPat) ? array_values($oldPat->programs) : [];
+    foreach ($oldPids as $pid) {
+        if ($pid == 0x10) {
+            // This is NIT (PAT program 0), we don't support it yet
+            continue;
+        }
+        $mpegTsParser->removePidFilter(new \PhpBg\MpegTs\Pid($pid));
+    }
+    foreach ($newPids as $pid) {
+        if ($pid == 0x10) {
+            // This is NIT (PAT program 0), we don't support it yet
+            continue;
+        }
+        $mpegTsParser->addPidFilter(new \PhpBg\MpegTs\Pid($pid));
+    }
+});
+$dvbPsiParser->on('pat', function ($pat) use ($streamContext) {
+    $streamContext->addPat($pat);
+});
+$dvbPsiParser->on('pmt', function ($pmt) use ($streamContext) {
+    $streamContext->addPmt($pmt);
 });
 
 // Read file and write packets
