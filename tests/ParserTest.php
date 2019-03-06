@@ -200,6 +200,9 @@ class ParserTest extends TestCase
         $parser->registerTableParser($tableParser);
         $this->assertSame(count($tableParser->getPids()), count($parser->getRegisteredPids()));
         $this->assertEquals($tableParser->getPids(), $parser->getRegisteredPids());
+
+        $parser->unregisterTableParser($tableParser);
+        $this->assertEmpty($parser->getRegisteredPids());
     }
 
     public function getRegisteredPidsDatasource()

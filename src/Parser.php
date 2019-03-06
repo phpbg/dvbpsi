@@ -52,6 +52,9 @@ use PhpBg\DvbPsi\TableParsers\TableParserInterface;
  *     The `eit` event will be emitted when an EIT table is decoded
  *     The event will receive a single argument: PhpBg\DvbPsi\Tables\Eit instance
  *
+ * parserChange event:
+ *     The `parserChange` will be emitted when a parser is added or removed
+ *
  * TODO other events?
  */
 class Parser extends EventEmitter
@@ -75,8 +78,28 @@ class Parser extends EventEmitter
                     throw new Exception("Parser already registered for PID: {$pid} and Table ID: {$tableId}");
                 }
                 $this->parsers[$pid][$tableId] = $parser;
+                $this->emit('parserChange');
             }
         }
+    }
+
+    /**
+     * Unregister a SI table parser
+     * @param TableParserInterface $parser
+     */
+    public function unregisterTableParser(TableParserInterface $parser) {
+        $pids = $parser->getPids();
+        foreach ($pids as $pid) {
+            foreach ($parser->getTableIds() as $tableId) {
+                if ($this->parsers[$pid][$tableId] == $parser) {
+                    unset($this->parsers[$pid][$tableId]);
+                }
+            }
+            if (empty($this->parsers[$pid])) {
+                unset($this->parsers[$pid]);
+            }
+        }
+        $this->emit('parserChange');
     }
 
     /**
