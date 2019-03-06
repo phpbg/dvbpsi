@@ -172,6 +172,21 @@ class EitServiceAggregator
     }
 
     /**
+     * Return all collected events (following abd scheduled)
+     *
+     * @return array
+     */
+    public function getAllEvents(): array {
+        $scheduledEvents = $this->getScheduledEvents();
+        foreach ($this->followingEvents as $eitEvent) {
+            if (! in_array($eitEvent, $scheduledEvents)) {
+                $scheduledEvents[] = $eitEvent;
+            }
+        }
+        return $scheduledEvents;
+    }
+
+    /**
      * Return the percent of aggregated events
      * NB: this number may be inaccurate because the spec allows for gap in numbering.
      * "the sub_table may be structured as a number of segments. Within each segment the section_number shall increment by 1 with each additional section, but a gap in numbering is permitted between the last section of a segment and the first section of the adjacent segment."
