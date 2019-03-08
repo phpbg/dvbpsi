@@ -85,15 +85,17 @@ class Pmt implements TableParserInterface
         $pmt->version = ($syntaxSectionHeadersArray['headers1'] & 0x3e) >> 1;
 
         while ($currentPointer < $crcOffset) {
-            $pmtDataArray = unpack('N', substr($data, $currentPointer, 4));
-            $currentPointer += 4;
-
-            $pcrPid = ($pmtDataArray[1] >> 16) & 0x1FFF;
+            $pmtData = unpack('n', substr($data, $currentPointer, 2))[1];
+            $currentPointer += 2;
+            $pcrPid = $pmtData & 0x1FFF;
             if ($pcrPid !== 0x1FFF) {
                 $pmt->pcrPid = $pcrPid;
             }
 
-            $programInfoLength = $pmtDataArray[1] & 0x3FF;
+            $pmtData = unpack('n', substr($data, $currentPointer, 2))[1];
+            $currentPointer += 2;
+            $programInfoLength = $pmtData & 0x3FF;
+
             // could not find info on program descriptors so it is completely ignored (yet)
             $currentPointer += $programInfoLength;
 
