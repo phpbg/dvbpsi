@@ -20,7 +20,7 @@
     "php": ">=7.0",
     "myclabs/php-enum": "^1.5",
     "evenement/evenement": "^3.0",
-    "phpbg/mpegts": "^0.1.0",
+    "phpbg/mpegts": "^0.2.0",
     "ext-calendar": "*"
   },
   "require-dev": {
