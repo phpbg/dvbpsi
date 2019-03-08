@@ -44,6 +44,10 @@ use PhpBg\DvbPsi\TableParsers\TableParserInterface;
  *     The `pmt` event will be emitted when a PMT table is decoded
  *     The event will receive a single argument: PhpBg\DvbPsi\Tables\Pmt
  *
+ * nit event:
+ *     The `nit` event will be emitted when a NIT table is decoded
+ *     The event will receive a single argument: PhpBg\DvbPsi\Tables\Nit
+ *
  * tdt event:
  *     The `tdt` event will be emitted when a TDT table is decoded
  *     The event will receive a single int argument: a unix timestamp
@@ -92,7 +96,8 @@ class Parser extends EventEmitter
      * Unregister a SI table parser
      * @param TableParserInterface $parser
      */
-    public function unregisterTableParser(TableParserInterface $parser) {
+    public function unregisterTableParser(TableParserInterface $parser)
+    {
         $pids = $parser->getPids();
         $pidsRemoved = [];
         foreach ($pids as $pid) {
@@ -127,6 +132,11 @@ class Parser extends EventEmitter
         }
     }
 
+    /**
+     * @param $pid
+     * @param $data
+     * @throws Exception
+     */
     protected function feed($pid, $data)
     {
         $len = strlen($data);
@@ -148,22 +158,28 @@ class Parser extends EventEmitter
             $headersBin = substr($data, $currentPointer + 1, 2);
             $headers = unpack('n', $headersBin)[1];
 
-            // According to wikipedia section length is 2 unused (zero) bits then 10 bits
-            // According to ETSI it is 12bits
-            // Whoever is right, we can use 12bits assuming the two first bits will be zero if unused
+            //The section_length is a 12-bit field.
+            // For some tables, it may use less bits (eg. NIT uses 10bits). In that case MSB are set to 0
             $sectionLength = $headers & 0xfff;
 
             //Move pointer after 3 bytes of header
             $currentPointer += 3;
 
-            // Parse table
+            // Find parser
             if (!isset($this->parsers[$pid][$tableId])) {
                 throw new Exception(sprintf("No parser for PID %d (0x%x) table ID %d (0x%x)\n", $pid, $pid, $tableId, $tableId));
             }
+
+            // Safeguard
+            if ($currentPointer + $sectionLength > $len) {
+                throw new Exception("Parse overflow (computed section length exceeds data length)");
+            }
+
+            // Parse
             $parsed = $this->parsers[$pid][$tableId]->parse($tableId, $data, $currentPointer, $sectionLength);
             $this->emit($this->parsers[$pid][$tableId]->getEventName(), [$parsed]);
 
-            // Move pointer
+            // Move pointer to next section
             $currentPointer += $sectionLength;
         }
     }

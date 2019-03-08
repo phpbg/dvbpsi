@@ -24,26 +24,29 @@
  * SOFTWARE.
  */
 
-namespace PhpBg\DvbPsi;
+namespace PhpBg\DvbPsi\Descriptors;
 
-use PhpBg\DvbPsi\TableParsers\Eit;
-use PhpBg\DvbPsi\TableParsers\Nit;
-use PhpBg\DvbPsi\TableParsers\Pat;
-use PhpBg\DvbPsi\TableParsers\Tdt;
-
-class ParserFactory
+/**
+ * Class PrivateDataSpecifier
+ * @see Final draft ETSI EN 300 468 V1.15.1 (2016-03), 6.2.31 Private data specifier descriptor
+ */
+class PrivateDataSpecifier
 {
     /**
-     * @return Parser
-     * @throws Exception
+     * Value of the private data specifier
+     * Name of the organisation which is responsible for delivering private data in SI streams, e.g “ACME, Inc.”
+     * @see https://www.dvbservices.com/identifiers/private_data_spec_id
+     * @var int
      */
-    public static function create(): Parser
+    public $private_data_specifier;
+
+    public function __construct($data)
     {
-        $parser = new Parser();
-        $parser->registerTableParser(new Pat());
-        $parser->registerTableParser(new Nit());
-        $parser->registerTableParser(new Tdt());
-        $parser->registerTableParser(new Eit());
-        return $parser;
+        $this->private_data_specifier = unpack('N', $data)[1];
+    }
+
+    public function __toString()
+    {
+        return sprintf("PrivateDataSpecifier: 0x%x\n", $this->private_data_specifier);
     }
 }

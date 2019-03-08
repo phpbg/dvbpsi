@@ -42,6 +42,11 @@ class ExtendedEvent
     public $items = [];
     public $text;
 
+    /**
+     * ExtendedEvent constructor.
+     * @param $data
+     * @throws \PhpBg\DvbPsi\Exception
+     */
     public function __construct($data)
     {
         $pointer = 0;

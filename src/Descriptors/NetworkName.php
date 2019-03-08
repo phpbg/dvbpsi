@@ -24,26 +24,36 @@
  * SOFTWARE.
  */
 
-namespace PhpBg\DvbPsi;
+namespace PhpBg\DvbPsi\Descriptors;
 
-use PhpBg\DvbPsi\TableParsers\Eit;
-use PhpBg\DvbPsi\TableParsers\Nit;
-use PhpBg\DvbPsi\TableParsers\Pat;
-use PhpBg\DvbPsi\TableParsers\Tdt;
+use PhpBg\DvbPsi\TableParsers\Text;
 
-class ParserFactory
+/**
+ * Class NetworkName
+ * @see Final draft ETSI EN 300 468 V1.15.1 (2016-03), 6.2.27 Network name descriptor
+ */
+class NetworkName
 {
+    use Text;
+
     /**
-     * @return Parser
-     * @throws Exception
+     * A string of char fields specify the name of the delivery system about which the NIT informs
+     * @var string
      */
-    public static function create(): Parser
+    public $networkName;
+
+    /**
+     * NetworkName constructor.
+     * @param $data
+     * @throws \PhpBg\DvbPsi\Exception
+     */
+    public function __construct($data)
     {
-        $parser = new Parser();
-        $parser->registerTableParser(new Pat());
-        $parser->registerTableParser(new Nit());
-        $parser->registerTableParser(new Tdt());
-        $parser->registerTableParser(new Eit());
-        return $parser;
+        $this->networkName = $this->toUtf8String($data);
+    }
+
+    public function __toString()
+    {
+        return "Network name: $this->networkName";
     }
 }

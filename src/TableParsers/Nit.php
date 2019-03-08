@@ -3,7 +3,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2018 Samuel CHEMLA
+ * Copyright (c) 2019 Samuel CHEMLA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,101 +27,89 @@
 namespace PhpBg\DvbPsi\TableParsers;
 
 use PhpBg\DvbPsi\Exception;
-use PhpBg\DvbPsi\Tables\EitEvent;
 use PhpBg\DvbPsi\Tables\Identifier;
+use PhpBg\DvbPsi\Tables\NitTs;
 use PhpBg\MpegTs\Pid;
 
-class Eit extends TableParserAbstract
+/**
+ * NIT parser
+ * @see \PhpBg\DvbPsi\Tables\
+ */
+class Nit extends TableParserAbstract
 {
-
-    use Timestamp;
-
     public function getPids(): array
     {
-        return [Pid::EIT_ST_CIT];
+        return [Pid::NIT_ST];
     }
 
     public function getTableIds(): array
     {
-        return array_merge(
-            [
-                Identifier::EVENT_INFORMATION_SECTION_ACTUAL_TS_PRESENT_FOLLOWING,
-                Identifier::EVENT_INFORMATION_SECTION_OTHER_TS_PRESENT_FOLLOWING
-            ],
-            Identifier::EVENT_INFORMATION_SECTION_ACTUAL_TS_PRESENT_SCHEDULE,
-            Identifier::EVENT_INFORMATION_SECTION_OTHER_TS_PRESENT_SCHEDULE
-        );
+        return [Identifier::NETWORK_INFORMATION_SECTION_ACTUAL_NETWORK, Identifier::NETWORK_INFORMATION_SECTION_OTHER_NETWORK];
     }
 
     public function getEventName(): string
     {
-        return 'eit';
+        return 'nit';
     }
 
     public function parse(int $tableId, string $data, int $currentPointer, int $sectionLength)
     {
-        $eit = new \PhpBg\DvbPsi\Tables\Eit();
-        $eit->tableId = $tableId;
-
         $crcOffset = $currentPointer + $sectionLength - 4;
 
-        $eit->serviceId = unpack('n', substr($data, $currentPointer, 2))[1];
+        $nit = new \PhpBg\DvbPsi\Tables\Nit();
+        $nit->networkId = unpack('n', substr($data, $currentPointer, 2))[1];
         $currentPointer += 2;
 
         $tmp = unpack('C', $data[$currentPointer])[1];
-        $eit->versionNumber = ($tmp >> 1) & 0x1f;
-        $eit->currentNextIndicator = $tmp & 0x01;
+        $nit->versionNumber = ($tmp >> 1) & 0x1f;
+        $nit->currentNextIndicator = $tmp & 0x01;
         $currentPointer += 1;
 
-        $eit->sectionNumber = unpack('C', $data[$currentPointer])[1];
+        $nit->sectionNumber = unpack('C', $data[$currentPointer])[1];
         $currentPointer += 1;
 
-        $eit->lastSectionNumber = unpack('C', $data[$currentPointer])[1];
+        $nit->lastSectionNumber = unpack('C', $data[$currentPointer])[1];
         $currentPointer += 1;
 
-        $eit->transportStreamId = unpack('n', substr($data, $currentPointer, 2))[1];
+        // Descriptors
+        $tmp = unpack('n', substr($data, $currentPointer, 2))[1];
         $currentPointer += 2;
+        $networkDescriptorsLength = $tmp & 0xfff;
+        $nit->descriptors = $this->parseDescriptorsLoop($data, $currentPointer, $networkDescriptorsLength);
+        $currentPointer += $networkDescriptorsLength;
 
-        $eit->originalNetworkId = unpack('n', substr($data, $currentPointer, 2))[1];
+        // Transport streams
+        $tmp = unpack('n', substr($data, $currentPointer, 2))[1];
         $currentPointer += 2;
+        $tsDescriptorsLength = $tmp & 0xfff;
+        $end = $currentPointer + $tsDescriptorsLength;
+        if ($end !== $crcOffset) {
+            throw new Exception("Unexpected TS descriptors length");
+        }
+        while ($currentPointer < $end) {
+            $nitTs = new NitTs();
 
-        $eit->segmentLastSectionNumber = unpack('C', $data[$currentPointer])[1];
-        $currentPointer += 1;
-
-        $eit->lastTableId = unpack('C', $data[$currentPointer])[1];
-        $currentPointer += 1;
-
-        while ($currentPointer < $crcOffset) {
-            $eitEvent = new EitEvent();
-
-            $eitEvent->eventId = unpack('n', substr($data, $currentPointer, 2))[1];
+            $nitTs->transportStreamId = unpack('n', substr($data, $currentPointer, 2))[1];
             $currentPointer += 2;
 
-            $startTime = substr($data, $currentPointer, 5);
-            $currentPointer += 5;
-            $eitEvent->startTimestamp = $this->getTimestampFromMjdUtc($startTime);
-
-            $duration = substr($data, $currentPointer, 3);
-            $currentPointer += 3;
-            $eitEvent->duration = $this->getTimestampFromUtcBcd($duration);
+            $nitTs->networkId = unpack('n', substr($data, $currentPointer, 2))[1];
+            $currentPointer += 2;
 
             $tmp = unpack('n', substr($data, $currentPointer, 2))[1];
             $currentPointer += 2;
-            $eitEvent->runningStatus = ($tmp >> 13) & 0x7;
-            $eitEvent->freeCaMode = ($tmp >> 12) & 0x1;
             $loopLength = $tmp & 0xfff;
             if ($currentPointer + $loopLength > $crcOffset) {
                 throw new Exception("Unexpected descriptors loop length");
             }
-            $eitEvent->descriptors = $this->parseDescriptorsLoop($data, $currentPointer, $loopLength);
+            $nitTs->descriptors = $this->parseDescriptorsLoop($data, $currentPointer, $loopLength);
             $currentPointer += $loopLength;
 
-            $eit->events[] = $eitEvent;
+            $nit->transportStreams[] = $nitTs;
         }
 
         //TODO check CRC
         $crc = unpack('N', substr($data, $currentPointer, 4))[1];
 
-        return $eit;
+        return $nit;
     }
 }

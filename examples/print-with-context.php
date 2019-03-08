@@ -71,8 +71,11 @@ $dvbPsiParser->on('pmt', function ($pmt) use ($streamContext) {
     $streamContext->addPmt($pmt);
 });
 
-// Prepare mpegts parser
-$mpegTsParser = \PhpBg\MpegTs\ParserFactory::createForDvbPsi();
+// Create MPEG TS parser and filter all requested PIDs
+$mpegTsParser = new \PhpBg\MpegTs\Parser();
+foreach($dvbPsiParser->getRegisteredPids() as $pid) {
+    $mpegTsParser->addPidFilter(new \PhpBg\MpegTs\Pid($pid));
+}
 $mpegTsParser->on('error', function ($e) {
     echo "TS parser error: {$e->getMessage()}\n";
 });

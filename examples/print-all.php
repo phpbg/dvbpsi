@@ -46,8 +46,11 @@ $dvbPsiParser = \PhpBg\DvbPsi\ParserFactory::create();
 $dvbPsiParser->on('error', function ($e) {
     echo "PSI parser error: {$e->getMessage()}\n";
 });
-$dvbPsiParser->on('pat', function ($pat) use ($dvbPsiParser) {
+$dvbPsiParser->on('pat', function ($pat) {
     echo "PAT\r\n{$pat}\r\n";
+});
+$dvbPsiParser->on('nit', function ($nit) {
+    echo "NIT\r\n{$nit}\r\n";
 });
 $dvbPsiParser->on('tdt', function ($tdt) {
     echo "TDT: {$tdt}\n";
@@ -59,8 +62,11 @@ $dvbPsiParser->on('pmt', function ($pmt) {
     echo "PMT\r\n{$pmt}\n";
 });
 
-// Prepare mpegts parser
-$mpegTsParser = \PhpBg\MpegTs\ParserFactory::createForDvbPsi();
+// Create MPEG TS parser and filter all requested PIDs
+$mpegTsParser = new \PhpBg\MpegTs\Parser();
+foreach($dvbPsiParser->getRegisteredPids() as $pid) {
+    $mpegTsParser->addPidFilter(new \PhpBg\MpegTs\Pid($pid));
+}
 $mpegTsParser->on('error', function ($e) {
     echo "TS parser error: {$e->getMessage()}\n";
 });

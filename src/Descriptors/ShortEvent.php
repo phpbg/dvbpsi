@@ -40,6 +40,11 @@ class ShortEvent
     public $eventName;
     public $text;
 
+    /**
+     * ShortEvent constructor.
+     * @param $data
+     * @throws \PhpBg\DvbPsi\Exception
+     */
     public function __construct($data)
     {
         $pointer = 0;

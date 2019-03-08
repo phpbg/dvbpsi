@@ -3,7 +3,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2018 Samuel CHEMLA
+ * Copyright (c) 2019 Samuel CHEMLA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,26 +24,39 @@
  * SOFTWARE.
  */
 
-namespace PhpBg\DvbPsi;
+namespace PhpBg\DvbPsi\Tables;
 
-use PhpBg\DvbPsi\TableParsers\Eit;
-use PhpBg\DvbPsi\TableParsers\Nit;
-use PhpBg\DvbPsi\TableParsers\Pat;
-use PhpBg\DvbPsi\TableParsers\Tdt;
-
-class ParserFactory
+/**
+ * Class NitTs
+ * Represents a transport stream described from NIT table
+ */
+class NitTs
 {
     /**
-     * @return Parser
-     * @throws Exception
+     * Network ID
+     * @var int
      */
-    public static function create(): Parser
+    public $networkId;
+
+    /**
+     * Transport stream ID
+     * @var int
+     */
+    public $transportStreamId;
+
+    /**
+     * Descriptors
+     * @var array
+     */
+    public $descriptors = [];
+
+    public function __toString()
     {
-        $parser = new Parser();
-        $parser->registerTableParser(new Pat());
-        $parser->registerTableParser(new Nit());
-        $parser->registerTableParser(new Tdt());
-        $parser->registerTableParser(new Eit());
-        return $parser;
+        $buf = sprintf("Network ID: %d (0x%x)\n", $this->networkId, $this->networkId);
+        $buf .= sprintf("Transport stream ID: %d (0x%x)\n", $this->transportStreamId, $this->transportStreamId);
+        foreach ($this->descriptors as $descriptor) {
+            $buf .= "{$descriptor}\n";
+        }
+        return $buf;
     }
 }

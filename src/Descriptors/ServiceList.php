@@ -24,26 +24,45 @@
  * SOFTWARE.
  */
 
-namespace PhpBg\DvbPsi;
+namespace PhpBg\DvbPsi\Descriptors;
 
-use PhpBg\DvbPsi\TableParsers\Eit;
-use PhpBg\DvbPsi\TableParsers\Nit;
-use PhpBg\DvbPsi\TableParsers\Pat;
-use PhpBg\DvbPsi\TableParsers\Tdt;
+use PhpBg\DvbPsi\Descriptors\Values\ServiceType;
 
-class ParserFactory
+/**
+ * Class ServiceList
+ * @see Final draft ETSI EN 300 468 V1.15.1 (2016-03), 6.2.35 Service list descriptor
+ */
+class ServiceList
 {
     /**
-     * @return Parser
-     * @throws Exception
+     * @var array <service id> => <service type>
      */
-    public static function create(): Parser
+    public $services;
+
+    /**
+     * ServiceList constructor.
+     * @param $data
+     * @throws \PhpBg\DvbPsi\Exception
+     */
+    public function __construct($data)
     {
-        $parser = new Parser();
-        $parser->registerTableParser(new Pat());
-        $parser->registerTableParser(new Nit());
-        $parser->registerTableParser(new Tdt());
-        $parser->registerTableParser(new Eit());
-        return $parser;
+        $pointer = 0;
+        $len = strlen($data);
+        while ($pointer < $len) {
+            $serviceId = unpack('n', substr($data, $pointer, 2))[1];
+            $pointer += 2;
+            $serviceType = unpack('C', $data[$pointer])[1];
+            $pointer += 1;
+            $this->services[$serviceId] = new ServiceType($serviceType);
+        }
+    }
+
+    public function __toString()
+    {
+        $msg = "Services:\n";
+        foreach ($this->services as $serviceId => $serviceType) {
+            $msg .= sprintf("Service ID: %d (0x%x) => %s\n", $serviceId, $serviceId, $serviceType->getKey());
+        }
+        return $msg;
     }
 }

@@ -8,7 +8,7 @@ It tries to comply with "Digital Video Broadcasting (DVB) - Specification for Se
 The initial goal is to provide parsing for following tables :
  * PAT: done
  * PMT: mostly
- * NIT: not yet planned
+ * NIT: mostly (missing some descriptors)
  * BAT: not yet planned
  * SDT: not yet planned
  * EIT: mostly (missing some descriptors)
@@ -22,7 +22,7 @@ The initial goal is to provide parsing for following tables :
 
 # Requirements
 
-* PHP7+
+* PHP7+ x64
 * Composer
 
 Those requirements can be installed on ubuntu 16.04:
@@ -34,6 +34,7 @@ Or on windows:
 1. http://php.net/downloads.php
 2. https://getcomposer.org/download/
 
+NB: **32bit** will partly work but **should be avoided** because some structures are unsigned 32bit and PHP will store them as signed 32bit. See: http://php.net/manual/en/function.unpack.php#refsect1-function.unpack-notes 
 
 # Installation
 

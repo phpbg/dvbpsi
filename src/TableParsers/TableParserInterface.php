@@ -26,6 +26,8 @@
 
 namespace PhpBg\DvbPsi\TableParsers;
 
+use PhpBg\DvbPsi\Exception;
+
 interface TableParserInterface
 {
     /**
@@ -53,6 +55,7 @@ interface TableParserInterface
      * @param int $currentPointer Current pointer position (parsing should start from this pointer)
      * @param int $sectionLength Parsing should stop after parsing that length
      * @return mixed
+     * @throws Exception
      */
     public function parse(int $tableId, string $data, int $currentPointer, int $sectionLength);
 }
