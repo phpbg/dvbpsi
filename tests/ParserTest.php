@@ -26,11 +26,15 @@
 
 namespace PhpBg\DvbPsi\Tests;
 
+use PhpBg\DvbPsi\Descriptors\NetworkName;
+use PhpBg\DvbPsi\Descriptors\TerrestrialDeliverySystem;
 use PhpBg\DvbPsi\Parser;
 use PhpBg\DvbPsi\ParserFactory;
 use PhpBg\DvbPsi\TableParsers\Pmt;
 use PhpBg\DvbPsi\TableParsers\TableParserInterface;
 use PhpBg\DvbPsi\Tables\Eit;
+use PhpBg\DvbPsi\Tables\Nit;
+use PhpBg\DvbPsi\Tables\NitTs;
 use PhpBg\DvbPsi\Tables\Pat;
 
 /**
@@ -212,5 +216,74 @@ class ParserTest extends TestCase
             [new \PhpBg\DvbPsi\TableParsers\Eit()],
             [new \PhpBg\DvbPsi\TableParsers\Tdt()]
         ];
+    }
+
+    public function testParseNit()
+    {
+        $data = $this->getTestFileContent('8_mpegts_nit_packets.ts');
+
+        $mpegTsParser = new \PhpBg\MpegTs\Parser();
+        $mpegTsParser->filterAllPids = true;
+
+        $dvbPsiParser = ParserFactory::create();
+
+        $dvbPsiParser->on('error', function ($e) {
+            $this->assertTrue(false);
+        });
+        $incomingNit = null;
+        $dvbPsiParser->on('nit', function ($eit) use (&$incomingNit) {
+            if ($incomingNit !== null) {
+                throw new \Exception('Only one nit is expected');
+            }
+            $incomingNit = $eit;
+        });
+        $mpegTsParser->on('error', function ($e) {
+            $this->assertTrue(false);
+        });
+        $mpegTsParser->on('pes', function ($pid, $data) use ($dvbPsiParser) {
+            $dvbPsiParser->write($pid, $data);
+        });
+
+        $mpegTsParser->write($data);
+
+        $this->assertInstanceOf(Nit::class, $incomingNit);
+        /**
+         * @var Nit $incomingNit
+         */
+        $this->assertSame(0x20fa, $incomingNit->networkId);
+        $this->assertSame(0x1e, $incomingNit->versionNumber);
+        $this->assertSame(0x1, $incomingNit->currentNextIndicator);
+        $this->assertSame(1, count($incomingNit->descriptors));
+        $nnd = current($incomingNit->descriptors);
+        $this->assertInstanceOf(NetworkName::class, $nnd);
+        /**
+         * @var NetworkName $nnd
+         */
+        $this->assertSame('F', $nnd->networkName);
+
+        $this->assertSame(7, count($incomingNit->transportStreams));
+        $stream004 = null;
+        foreach ($incomingNit->transportStreams as $ts) {
+            if ($ts->transportStreamId === 0x4) {
+                $stream004 = $ts;
+            }
+        }
+        $this->assertInstanceOf(NitTs::class, $stream004);
+        $this->assertSame(0x20fa, $stream004->networkId);
+
+        // There are 4 descriptors, but the 0x83 one is not yet supported
+        $this->assertSame(3, count($stream004->descriptors));
+
+        $tds = null;
+        foreach ($stream004->descriptors as $descriptor) {
+            if ($descriptor instanceof TerrestrialDeliverySystem) {
+                $tds = $descriptor;
+            }
+        }
+        $this->assertInstanceOf(TerrestrialDeliverySystem::class, $tds);
+        $this->assertSame(42949672950, $tds->centreFrequency);
+        $this->assertSame(8000000, $tds->bandwidth);
+        $this->assertSame('64-QAM', TerrestrialDeliverySystem::CONSTELLATION_MAPPING[$tds->constellation]);
+        $this->assertSame('1/8', TerrestrialDeliverySystem::GUARD_INTERVAL_MAPPING[$tds->guardInterval]);
     }
 }
