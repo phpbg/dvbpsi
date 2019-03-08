@@ -52,6 +52,9 @@ trait Text
             // iconv should work : http://php.net/manual/en/function.iconv.php
             // Else test this: https://github.com/mtojo/camellia
             $encoding = 'ISO6937';
+
+            // In that case the first byte was a visible character,so don't skip it
+            $stringPointer--;
         }
         if ($encoding === null && $firstByte >= 0x01 && $firstByte <= 0x0f) {
             // if the first byte of the text field has a value in the range "0x01" to "0x0F" then the remaining bytes in the text
