@@ -67,6 +67,9 @@ $dvbPsiParser->on('tdt', function ($tdt) use ($streamContext) {
 $dvbPsiParser->on('eit', function ($eit) use ($globalContext) {
     $globalContext->addEit($eit);
 });
+$dvbPsiParser->on('nit', function ($nit) use ($globalContext) {
+    $globalContext->addNit($nit);
+});
 $dvbPsiParser->on('pmt', function ($pmt) use ($streamContext) {
     $streamContext->addPmt($pmt);
 });

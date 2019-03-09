@@ -26,16 +26,42 @@
 
 namespace PhpBg\DvbPsi\Context;
 
-
 use Evenement\EventEmitter;
 use PhpBg\DvbPsi\Tables\Eit;
+use PhpBg\DvbPsi\Tables\Nit;
 
 class GlobalContext extends EventEmitter
 {
     protected $eitByNetworks = [];
 
+    /**
+     * @var NitAggregator[]
+     */
+    protected $nitByNetworks = [];
+
+    /**
+     * @param Nit $nit
+     * @throws \PhpBg\DvbPsi\Exception
+     */
+    public function addNit(Nit $nit)
+    {
+        if ($nit->currentNextIndicator !== 1) {
+            return;
+        }
+        if (!isset($this->nitByNetworks[$nit->networkId])) {
+            $this->nitByNetworks[$nit->networkId] = new NitAggregator();
+        }
+        $nitComplete = $this->nitByNetworks[$nit->networkId]->add($nit);
+        if ($nitComplete) {
+            $this->emit('nit', [$this->nitByNetworks[$nit->networkId]]);
+        }
+    }
+
     public function addEit(Eit $eit)
     {
+        if ($eit->currentNextIndicator !== 1) {
+            return;
+        }
         if (!isset($this->eitByNetworks[$eit->originalNetworkId])) {
             $this->eitByNetworks[$eit->originalNetworkId] = [];
         }
@@ -75,17 +101,18 @@ class GlobalContext extends EventEmitter
     public function __toString()
     {
         $str = '';
-        if (!empty($this->eitByNetworks)) {
-            foreach ($this->eitByNetworks as $networkId => $transportStreams) {
-                $str .= sprintf("Network: %d (0x%x)\n", $networkId, $networkId);
-                foreach ($transportStreams as $transportStream => $services) {
-                    $str .= sprintf("\tTransport Stream: %d (0x%x)\n", $transportStream, $transportStream);
-                    foreach ($services as $service => $eitAggregator) {
-                        $str .= sprintf("\t\tService: %d (0x%x)\n", $service, $service);
-                        $str .= (string)$eitAggregator;
-                    }
+        foreach ($this->eitByNetworks as $networkId => $transportStreams) {
+            $str .= sprintf("Network: %d (0x%x)\n", $networkId, $networkId);
+            foreach ($transportStreams as $transportStream => $services) {
+                $str .= sprintf("\tTransport Stream: %d (0x%x)\n", $transportStream, $transportStream);
+                foreach ($services as $service => $eitAggregator) {
+                    $str .= sprintf("\t\tService: %d (0x%x)\n", $service, $service);
+                    $str .= (string)$eitAggregator;
                 }
             }
+        }
+        foreach ($this->nitByNetworks as $networkId => $nitAggregator) {
+            echo "$nitAggregator\n";
         }
         return $str;
     }
