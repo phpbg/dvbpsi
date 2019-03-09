@@ -27,6 +27,7 @@
 namespace PhpBg\DvbPsi\Tests;
 
 use PhpBg\DvbPsi\Descriptors\NetworkName;
+use PhpBg\DvbPsi\Descriptors\PrivateDescriptors\EACEM\LogicalChannel;
 use PhpBg\DvbPsi\Descriptors\TerrestrialDeliverySystem;
 use PhpBg\DvbPsi\Parser;
 use PhpBg\DvbPsi\ParserFactory;
@@ -271,13 +272,16 @@ class ParserTest extends TestCase
         $this->assertInstanceOf(NitTs::class, $stream004);
         $this->assertSame(0x20fa, $stream004->networkId);
 
-        // There are 4 descriptors, but the 0x83 one is not yet supported
-        $this->assertSame(3, count($stream004->descriptors));
+        $this->assertSame(4, count($stream004->descriptors));
 
         $tds = null;
+        $lcn = null;
         foreach ($stream004->descriptors as $descriptor) {
             if ($descriptor instanceof TerrestrialDeliverySystem) {
                 $tds = $descriptor;
+            }
+            if ($descriptor instanceof LogicalChannel) {
+                $lcn = $descriptor;
             }
         }
         $this->assertInstanceOf(TerrestrialDeliverySystem::class, $tds);
@@ -285,5 +289,8 @@ class ParserTest extends TestCase
         $this->assertSame(8000000, $tds->bandwidth);
         $this->assertSame('64-QAM', TerrestrialDeliverySystem::CONSTELLATION_MAPPING[$tds->constellation]);
         $this->assertSame('1/8', TerrestrialDeliverySystem::GUARD_INTERVAL_MAPPING[$tds->guardInterval]);
+
+        $this->assertInstanceOf(LogicalChannel::class, $lcn);
+        $this->assertSame(5, count($lcn->services));
     }
 }

@@ -33,6 +33,7 @@ use PhpBg\DvbPsi\Descriptors\Identifier;
 use PhpBg\DvbPsi\Descriptors\NetworkName;
 use PhpBg\DvbPsi\Descriptors\ParentalRating;
 use PhpBg\DvbPsi\Descriptors\PrivateDataSpecifier;
+use PhpBg\DvbPsi\Descriptors\PrivateDescriptors\EACEM\LogicalChannel;
 use PhpBg\DvbPsi\Descriptors\ServiceList;
 use PhpBg\DvbPsi\Descriptors\ShortEvent;
 use PhpBg\DvbPsi\Descriptors\TerrestrialDeliverySystem;
@@ -40,6 +41,12 @@ use PhpBg\DvbPsi\Exception;
 
 abstract class TableParserAbstract implements TableParserInterface
 {
+
+    /**
+     * Private data specifier, used to select private descriptors parsers
+     * @var int | null
+     */
+    protected $privateDataSpecifier;
 
     /**
      * Parse a descriptor loop
@@ -61,6 +68,8 @@ abstract class TableParserAbstract implements TableParserInterface
         if ($descriptorsEnd > $dataLen) {
             throw new Exception("Descriptors loop parse overflow (data length exceeded)");
         }
+        // Reset private data specifier
+        $this->privateDataSpecifier = null;
         while ($currentPointer < $descriptorsEnd) {
             // Safeguard, again
             if ($currentPointer >= $dataLen) {
@@ -104,7 +113,6 @@ abstract class TableParserAbstract implements TableParserInterface
         $descriptorData = substr($data, $currentPointer, $descriptorLength);
 
         switch ($descriptorId) {
-            //TODO handle private descriptor tag : 0x83 in case data specifier is 0x00000028 EACEM. In that case it provides logical channel numbering
             case Identifier::TERRESTRIAL_DELIVERY_SYSTEM_DESCRIPTOR:
                 return new TerrestrialDeliverySystem($descriptorData);
 
@@ -112,7 +120,9 @@ abstract class TableParserAbstract implements TableParserInterface
                 return new NetworkName($descriptorData);
 
             case Identifier::PRIVATE_DATA_SPECIFIER_DESCRIPTOR:
-                return new PrivateDataSpecifier($descriptorData);
+                $pds = new PrivateDataSpecifier($descriptorData);
+                $this->privateDataSpecifier = $pds->private_data_specifier;
+                return $pds;
 
             case Identifier::SERVICE_LIST_DESCRIPTOR:
                 return new ServiceList($descriptorData);
@@ -131,6 +141,14 @@ abstract class TableParserAbstract implements TableParserInterface
 
             case Identifier::CONTENT_DESCRIPTOR:
                 return new Content($descriptorData);
+
+
+            // Private descriptors
+            case 0x83:
+                if (empty($this->privateDataSpecifier) || $this->privateDataSpecifier !== 0x28) {
+                    throw new Exception(sprintf("Unhandled descriptor tag : 0x%x", $descriptorId));
+                }
+                return new LogicalChannel($descriptorData);
 
             default:
                 throw new Exception(sprintf("Unhandled descriptor tag : 0x%x", $descriptorId));
