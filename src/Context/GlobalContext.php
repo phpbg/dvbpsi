@@ -57,6 +57,14 @@ class GlobalContext extends EventEmitter
         }
     }
 
+    /**
+     * @return NitAggregator[]
+     */
+    public function getNitAggregators(): array
+    {
+        return $this->nitByNetworks;
+    }
+
     public function addEit(Eit $eit)
     {
         if ($eit->currentNextIndicator !== 1) {

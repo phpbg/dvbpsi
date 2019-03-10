@@ -44,6 +44,8 @@ class NitAggregator
 
     protected $version;
 
+    protected $lastSectionNumber;
+
     /**
      * Aggregate a new EIT
      *
@@ -63,18 +65,30 @@ class NitAggregator
         if (!isset($this->version) || $nit->versionNumber > $this->version || ($nit->versionNumber === 0 && $this->version === 31)) {
             // Version update (or initial collection of nit)
             $this->version = $nit->versionNumber;
+            $this->lastSectionNumber = $nit->lastSectionNumber;
             $this->segments = [];
         }
         if (!isset($this->segments[$nit->sectionNumber])) {
             $this->segments[$nit->sectionNumber] = $nit;
         }
-        if (count($this->segments) >= $nit->lastSectionNumber + 1) {
+        return $this->isComplete();
+    }
+
+    /**
+     * Return true if all NIT segments have been aggregated
+     * @return bool
+     */
+    public function isComplete(): bool
+    {
+        if (!isset($this->lastSectionNumber)) {
+            return false;
+        }
+        if (count($this->segments) >= $this->lastSectionNumber + 1) {
             // NIT aggregation is complete
             return true;
         }
         return false;
     }
-
 
     public function __toString()
     {
