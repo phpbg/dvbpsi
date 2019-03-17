@@ -172,9 +172,9 @@ class EitServiceAggregator
     }
 
     /**
-     * Return all collected events (following abd scheduled)
+     * Return all collected events (following and scheduled)
      *
-     * @return array
+     * @return EitEvent[]
      */
     public function getAllEvents(): array {
         $scheduledEvents = $this->getScheduledEvents();
