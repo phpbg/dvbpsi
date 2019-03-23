@@ -30,7 +30,6 @@ use PhpBg\DvbPsi\Exception;
 use PhpBg\DvbPsi\Tables\Eit;
 use PhpBg\DvbPsi\Tables\EitEvent;
 use PhpBg\DvbPsi\Tables\Identifier;
-use PhpBg\DvbPsi\Tables\Values\EitRunningStatus;
 
 /**
  * Class EitServiceAggregator
@@ -125,23 +124,26 @@ class EitServiceAggregator
     }
 
     /**
-     * Return current running event
+     * Return running event at a specified timestamp, which defaults to now
      *
      * @return EitEvent|null
+     * @param int $timestamp
      */
-    public function getRunningEvent()
+    public function getRunningEvent(int $timestamp = null)
     {
-        if (empty($this->followingEvents)) {
-            return null;
+        if (!isset($timestamp)) {
+            $timestamp = time();
         }
-        $runningStatus = EitRunningStatus::RUNNING();
-        foreach ($this->followingEvents as $eitevent) {
-            /**
-             * @var EitEvent $eit
-             */
-            if ($runningStatus->equals($eitevent->getRunningStatus())) {
-                return $eitevent;
+        foreach ($this->getAllEvents() as $event) {
+            if ($event->startTimestamp > $timestamp) {
+                // Future event
+                continue;
             }
+            if ($event->startTimestamp + $event->duration < $timestamp) {
+                // Past event
+                continue;
+            }
+            return $event;
         }
         return null;
     }
