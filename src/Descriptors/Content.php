@@ -26,6 +26,8 @@
 
 namespace PhpBg\DvbPsi\Descriptors;
 
+use PhpBg\DvbPsi\Descriptors\Values\ContentNibble;
+
 /**
  * Class Content
  * @see Final draft ETSI EN 300 468 V1.13.1 (2012-04), 6.2.9 Content descriptor
@@ -52,8 +54,11 @@ class Content
     {
         $msg = "Content:\n";
         foreach ($this->nibbles as $nibble) {
-            // TODO human decode levels
             $msg .= sprintf("Level1: 0x%x, Level2: 0x%x, User byte:0x%x\n", $nibble[0], $nibble[1], $nibble[2]);
+
+            if (isset(ContentNibble::NIBBLES[$nibble[0]][$nibble[1]])) {
+                $msg .= sprintf("\t%s\n", ContentNibble::NIBBLES[$nibble[0]][$nibble[1]]);
+            }
         }
         return $msg;
     }
