@@ -30,39 +30,49 @@ use PhpBg\DvbPsi\Descriptors\Values\ServiceType;
 
 /**
  * Class ServiceList
- * @see Final draft ETSI EN 300 468 V1.15.1 (2016-03), 6.2.34 Service availability descriptor
+ * @see Final draft ETSI EN 300 468 V1.15.1 (2016-03), 6.2.33 Service descriptor
  */
 class ServiceDescriptor
 {
-    /**
-     * @var array <service id> => <service type>
-     */
-    public $services;
 
     /**
-     * ServiceList constructor.
+     * This is an 8-bit field specifying the type of the service. The assignment of service_type value for a
+     * service is described in annex I.
+     */
+    public $serviceType;
+    public $serviceProviderName;
+    public $serviceName;
+
+    /**
+     * ServiceDescriptor constructor.
      * @param $data
      * @throws \PhpBg\DvbPsi\Exception
      */
     public function __construct($data)
     {
         $pointer = 0;
-        $len = strlen($data);
-        while ($pointer < $len) {
-            $serviceId = unpack('n', substr($data, $pointer, 2))[1];
-            $pointer += 2;
-            $serviceType = unpack('C', $data[$pointer])[1];
-            $pointer += 1;
-            $this->services[$serviceId] = new ServiceType($serviceType);
-        }
+        $serviceType = unpack('C', $data[ $pointer])[1];
+        $this->serviceType = new ServiceType($serviceType);
+
+        $pointer += 1;
+        $serviceProviderNameLength = unpack('C', $data[$pointer])[1];
+
+        $pointer += 1;
+        $this->serviceProviderName = substr($data, $pointer, $serviceProviderNameLength);
+
+        $pointer += $serviceProviderNameLength;
+        $serviceNameLength = unpack('C', $data[$pointer])[1];
+
+        $pointer += 1;
+        $this->serviceName = substr($data, $pointer, $serviceNameLength);
     }
 
     public function __toString()
     {
-        $msg = "Services:\n";
-        foreach ($this->services as $serviceId => $serviceType) {
-            $msg .= sprintf("Service ID: %d (0x%x) => %s\n", $serviceId, $serviceId, $serviceType->getKey());
-        }
+        $msg = sprintf("Service type: %s (0x%x)\n", $this->serviceType->getKey(), $this->serviceType->getValue() );
+        $msg .= "Service provider name: $this->serviceProviderName\n";
+        $msg .= "Service name: $this->serviceName\n";
+
         return $msg;
     }
 }

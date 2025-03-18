@@ -27,7 +27,7 @@
 namespace PhpBg\DvbPsi\Tables;
 
 use PhpBg\DvbPsi\Descriptors\ShortEvent;
-use PhpBg\DvbPsi\Tables\Values\EitRunningStatus;
+use PhpBg\DvbPsi\Tables\Values\SdtRunningStatus;
 
 class SdtService
 {
@@ -72,11 +72,11 @@ class SdtService
 
     public $descriptors = [];
 
-    public function getRunningStatus(): EitRunningStatus {
+    public function getRunningStatus(): SdtRunningStatus {
         if (! isset($this->runningStatus)) {
-            return EitRunningStatus::UNDEFINED();
+            return SdtRunningStatus::UNDEFINED();
         }
-        return new EitRunningStatus($this->runningStatus);
+        return new SdtRunningStatus($this->runningStatus);
     }
 
     /**
@@ -96,8 +96,6 @@ class SdtService
     public function __toString()
     {
         $str = sprintf("Service id: %d (0x%x)\n", $this->serviceId, $this->serviceId);
-//        $str .= sprintf("Start %d (%s)\n", $this->startTimestamp, date('Y-m-d H:i:s', $this->startTimestamp));
-//        $str .= sprintf("Duration %d (until %s)\n", $this->duration, date('Y-m-d H:i:s', $this->startTimestamp + $this->duration));
         $runningStatus = $this->getRunningStatus();
         $str .= "Running status: " . $runningStatus->getKey() . "\n";
         $str .= sprintf("Scrambled: %s\n", $this->freeCaMode === 1 ? 'yes' : 'no');

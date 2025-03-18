@@ -63,7 +63,6 @@ class Sdt extends TableParserAbstract
         $crcOffset = $currentPointer + $sectionLength - 4;
 
         $sdt->transportStreamId = unpack('n', substr($data, $currentPointer, 2))[1];
-        var_dump($sdt->transportStreamId);
 
         $currentPointer += 2;
         $tmp = unpack('C', $data[$currentPointer])[1];
@@ -84,7 +83,6 @@ class Sdt extends TableParserAbstract
             $sdtService = new SdtService();
 
             $sdtService->serviceId = unpack('n', substr($data, $currentPointer, 2))[1];
-            var_dump($sdtService->serviceId);
 
             $currentPointer += 2;
             $tmp = unpack('C', $data[$currentPointer])[1];
@@ -93,16 +91,14 @@ class Sdt extends TableParserAbstract
 
             $currentPointer += 1;
             $tmp = unpack('n', substr($data, $currentPointer, 2))[1];
-            $runningStatus = ($tmp >> 13) & 0x7;
-            $freeCaMode = ($tmp >> 12) & 0x1;
+            $sdtService->runningStatus = ($tmp >> 13) & 0x7;
+            $sdtService->freeCaMode = ($tmp >> 12) & 0x1;
             $loopLength = $tmp & 0xfff;
-            var_dump($loopLength);
             if ($currentPointer + $loopLength > $crcOffset) {
                 throw new Exception("Unexpected descriptors loop length");
             }
             $currentPointer += 2;
-            $descriptors = $this->parseDescriptorsLoop($data, $currentPointer, $loopLength);
-            var_dump($descriptors);
+            $sdtService->descriptors = $this->parseDescriptorsLoop($data, $currentPointer, $loopLength);
             $currentPointer += $loopLength;
 
             $sdt->services[] = $sdtService;
