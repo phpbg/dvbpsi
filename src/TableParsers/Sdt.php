@@ -44,7 +44,10 @@ class Sdt extends TableParserAbstract
 
     public function getTableIds(): array
     {
-        return [];
+        return [
+            Identifier::SERVICE_DESCRIPTION_SECTION_ACTUAL_TRANSPORT_STREAM,
+            Identifier::SERVICE_DESCRIPTION_SECTION_OTHER_TRANSPORT_STREAM
+        ];
     }
 
     public function getEventName(): string
