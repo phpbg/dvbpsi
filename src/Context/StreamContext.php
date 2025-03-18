@@ -51,9 +51,9 @@ class StreamContext extends EventEmitter
     public $pmts;
 
     /**
-     * @var Sdt
+     * @var Sdt[]
      */
-    public $sdt;
+    public $sdts;
 
 
     public function addPat(Pat $pat)
@@ -68,11 +68,12 @@ class StreamContext extends EventEmitter
 
     public function addSdt(Sdt $sdt)
     {
-        if (!isset($this->sdt) || $this->sdt->versionNumber < $sdt->versionNumber || ($this->sdt->versionNumber !== 0 && $sdt->versionNumber === 0)) {
-            $oldSdt = $this->sdt;
-            $this->sdt = $sdt;
-            $this->pmts = [];
-            $this->emit('sdt-update', [$this->sdt, $oldSdt]);
+        if (!isset($this->sdts[$sdt->transportStreamId])
+            || $this->sdts[$sdt->transportStreamId]->versionNumber < $sdt->versionNumber
+            || ($this->sdts[$sdt->transportStreamId]->versionNumber !== 0 && $sdt->versionNumber === 0)
+        ) {
+            $this->sdts[$sdt->transportStreamId] = $sdt;
+            $this->emit('update');
         }
     }
 
