@@ -60,18 +60,8 @@ class Sdt extends TableParserAbstract
         $sdt = new \PhpBg\DvbPsi\Tables\Sdt();
         $sdt->tableId = $tableId;
 
-        //section_length
-        $headersBin = substr($data, $currentPointer + 1, 2);
-        $headers = unpack('n', $headersBin)[1];
-
-        //The section_length is a 12-bit field.
-        // For some tables, it may use less bits (eg. NIT uses 10bits). In that case MSB are set to 0
-        $sectionLength = $headers & 0xfff;
-        var_dump($sectionLength);
-
-        //Move pointer after 3 bytes of header
-        $currentPointer += 3;
         $crcOffset = $currentPointer + $sectionLength - 4;
+
         $sdt->transportStreamId = unpack('n', substr($data, $currentPointer, 2))[1];
         var_dump($sdt->transportStreamId);
 
