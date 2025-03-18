@@ -26,36 +26,43 @@
 
 namespace PhpBg\DvbPsi\Descriptors;
 
-use MyCLabs\Enum\Enum;
+use PhpBg\DvbPsi\Descriptors\Values\ServiceType;
 
 /**
- * Class Descriptor
- * @see Final draft ETSI EN 300 468 V1.13.1 (2012-04), 6 Descriptors
+ * Class ServiceList
+ * @see Final draft ETSI EN 300 468 V1.15.1 (2016-03), 6.2.34 Service availability descriptor
  */
-class Identifier extends Enum
+class ServiceDescriptor
 {
-    const NETWORK_NAME_DESCRIPTOR = 0x40;
-    const SERVICE_LIST_DESCRIPTOR = 0x41;
-    const STUFFING_DESCRIPTOR = 0x42;
-    const SERVICE_DESCRIPTOR = 0x48;
-    const LINKAGE_DESCRIPTOR = 0x4a;
-    const SHORT_EVENT_DESCRIPTOR = 0x4d;
-    const EXTENDED_EVENT_DESCRIPTOR = 0x4e;
-    const TIME_SHIFTED_EVENT_DESCRIPTOR = 0x4f;
-    const COMPONENT_DESCRIPTOR = 0x50;
-    const TERRESTRIAL_DELIVERY_SYSTEM_DESCRIPTOR = 0x5a;
-    const CA_IDENTIFIER_DESCRIPTOR = 0x53;
-    const CONTENT_DESCRIPTOR = 0x54;
-    const PARENTAL_RATING_DESCRIPTOR = 0x55;
-    const TELEPHONE_DESCRIPTOR = 0x57;
-    const MULTILINGUAL_COMPONENT_DESCRIPTOR = 0x5e;
-    const PRIVATE_DATA_SPECIFIER_DESCRIPTOR = 0x5f;
-    const SHORT_SMOOTHING_BUFFER_DESCRIPTOR = 0x61;
-    const DATA_BROADCAST_DESCRIPTOR = 0x64;
-    const PDC_DESCRIPTOR = 0x69;
-    const TVA_ID_DESCRIPTOR = 0x75;
-    const CONTENT_IDENTIFIER_DESCRIPTOR = 0x76;
-    const XAIT_LOCATION_DESCRIPTOR = 0x7d;
-    const FTA_CONTENT_MANAGEMENT_DESCRIPTOR = 0x7e;
-    const EXTENSION_DESCRIPTOR = 0x7f;
+    /**
+     * @var array <service id> => <service type>
+     */
+    public $services;
+
+    /**
+     * ServiceList constructor.
+     * @param $data
+     * @throws \PhpBg\DvbPsi\Exception
+     */
+    public function __construct($data)
+    {
+        $pointer = 0;
+        $len = strlen($data);
+        while ($pointer < $len) {
+            $serviceId = unpack('n', substr($data, $pointer, 2))[1];
+            $pointer += 2;
+            $serviceType = unpack('C', $data[$pointer])[1];
+            $pointer += 1;
+            $this->services[$serviceId] = new ServiceType($serviceType);
+        }
+    }
+
+    public function __toString()
+    {
+        $msg = "Services:\n";
+        foreach ($this->services as $serviceId => $serviceType) {
+            $msg .= sprintf("Service ID: %d (0x%x) => %s\n", $serviceId, $serviceId, $serviceType->getKey());
+        }
+        return $msg;
+    }
 }
