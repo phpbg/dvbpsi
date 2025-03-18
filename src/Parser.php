@@ -56,6 +56,10 @@ use PhpBg\DvbPsi\TableParsers\TableParserInterface;
  *     The `eit` event will be emitted when an EIT table is decoded
  *     The event will receive a single argument: PhpBg\DvbPsi\Tables\Eit instance
  *
+ * sdt event:
+ *     The `sdt` event will be emitted when an SDT table is decoded
+ *     The event will receive a single argument: PhpBg\DvbPsi\Tables\Sdt instance
+ *
  * parserAdd event:
  *     The `parserAdd` will be emitted when a parser is added
  *

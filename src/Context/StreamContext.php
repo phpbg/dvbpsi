@@ -30,6 +30,7 @@ namespace PhpBg\DvbPsi\Context;
 use Evenement\EventEmitter;
 use PhpBg\DvbPsi\Tables\Pat;
 use PhpBg\DvbPsi\Tables\Pmt;
+use PhpBg\DvbPsi\Tables\Sdt;
 
 class StreamContext extends EventEmitter
 {
@@ -49,6 +50,12 @@ class StreamContext extends EventEmitter
      */
     public $pmts;
 
+    /**
+     * @var Sdt
+     */
+    public $sdt;
+
+
     public function addPat(Pat $pat)
     {
         if (!isset($this->pat) || $this->pat->version < $pat->version || ($this->pat->version !== 0 && $pat->version === 0)) {
@@ -56,6 +63,16 @@ class StreamContext extends EventEmitter
             $this->pat = $pat;
             $this->pmts = [];
             $this->emit('pat-update', [$this->pat, $oldPat]);
+        }
+    }
+
+    public function addSdt(Sdt $sdt)
+    {
+        if (!isset($this->sdt) || $this->sdt->versionNumber < $sdt->versionNumber || ($this->sdt->versionNumber !== 0 && $sdt->versionNumber === 0)) {
+            $oldSdt = $this->sdt;
+            $this->sdt = $sdt;
+            $this->pmts = [];
+            $this->emit('sdt-update', [$this->sdt, $oldSdt]);
         }
     }
 
