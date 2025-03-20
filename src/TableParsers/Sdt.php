@@ -63,41 +63,40 @@ class Sdt extends TableParserAbstract
         $crcOffset = $currentPointer + $sectionLength - 4;
 
         $sdt->transportStreamId = unpack('n', substr($data, $currentPointer, 2))[1];
-
         $currentPointer += 2;
+
         $tmp = unpack('C', $data[$currentPointer])[1];
+        $currentPointer += 1;
         $sdt->versionNumber = ($tmp >> 1) & 0x1f;
         $sdt->currentNextIndicator = $tmp & 0x01;
 
-        $currentPointer += 1;
         $sectionNumber = unpack('C', $data[$currentPointer])[1];
-
         $currentPointer += 1;
+
         $lastSectionNumber = unpack('C', $data[$currentPointer])[1];
-
         $currentPointer += 1;
-        $originalNetworkId = unpack('n', substr($data, $currentPointer, 2))[1];
 
+        $originalNetworkId = unpack('n', substr($data, $currentPointer, 2))[1];
         $currentPointer += 3;
         while ($currentPointer < $crcOffset) {
             $sdtService = new SdtService();
 
             $sdtService->serviceId = unpack('n', substr($data, $currentPointer, 2))[1];
-
             $currentPointer += 2;
+
             $tmp = unpack('C', $data[$currentPointer])[1];
+            $currentPointer += 1;
             $sdtService->eitScheduleFlag = ($tmp >> 1) & 0x01;
             $sdtService->eitPresentFollowingFlag = $tmp & 0x01;
 
-            $currentPointer += 1;
             $tmp = unpack('n', substr($data, $currentPointer, 2))[1];
+            $currentPointer += 2;
             $sdtService->runningStatus = ($tmp >> 13) & 0x7;
             $sdtService->freeCaMode = ($tmp >> 12) & 0x1;
             $loopLength = $tmp & 0xfff;
             if ($currentPointer + $loopLength > $crcOffset) {
                 throw new Exception("Unexpected descriptors loop length");
             }
-            $currentPointer += 2;
             $sdtService->descriptors = $this->parseDescriptorsLoop($data, $currentPointer, $loopLength);
             $currentPointer += $loopLength;
 

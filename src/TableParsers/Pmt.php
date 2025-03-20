@@ -27,6 +27,7 @@
 namespace PhpBg\DvbPsi\TableParsers;
 
 use PhpBg\DvbPsi\Tables\Identifier;
+use PhpBg\DvbPsi\Tables\PtmEsStream;
 use PhpBg\MpegTs\Pid;
 
 /**
@@ -35,6 +36,8 @@ use PhpBg\MpegTs\Pid;
  */
 class Pmt implements TableParserInterface
 {
+
+    use Descriptor;
 
     protected $pids = [];
 
@@ -101,19 +104,27 @@ class Pmt implements TableParserInterface
 
             // Elementary stream info data
             while ($currentPointer < $crcOffset) {
+                $es = new PtmEsStream();
                 $elementaryStreamHeaderBin = substr($data, $currentPointer, 5);
                 $currentPointer += 5;
                 $elementaryStreamHeaderArray = unpack('C1st/n2headers', $elementaryStreamHeaderBin);
 
-                $streamType = $elementaryStreamHeaderArray['st'];
+                $es->streamType = $elementaryStreamHeaderArray['st'];
+
                 $pid = $elementaryStreamHeaderArray['headers1'] & 0x1FFF;
                 $descriptorsLen = $elementaryStreamHeaderArray['headers2'] & 0x3FF;
 
-                //TODO handle $streamType and descriptors
+                // Descriptor info data
+                $descriptorBin = substr($data, $currentPointer, $descriptorsLen);
                 $currentPointer += $descriptorsLen;
 
-                $pmt->streams[$pid] = null;
+                $es->descriptorTag = unpack('C', $descriptorBin[0])[1];
+                $descriptorLength = unpack('C', $descriptorBin[1])[1];
 
+                $tmp = substr($descriptorBin, 2, $descriptorLength);
+                $es->descriptors[] = $this->parseDescriptor($es->descriptorTag, $tmp);
+
+                $pmt->streams[$pid] = $es;
             }
         }
 

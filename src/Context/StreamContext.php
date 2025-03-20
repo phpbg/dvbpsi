@@ -75,6 +75,7 @@ class StreamContext extends EventEmitter
             $this->sdts[$sdt->transportStreamId] = $sdt;
             $this->emit('update');
         }
+
     }
 
     public function addPmt(Pmt $pmt)
