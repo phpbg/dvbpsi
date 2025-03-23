@@ -48,8 +48,6 @@ trait Descriptor
             $descriptorLen = unpack('C', substr($data, $pointer, 1))[1];
             $pointer += 1;
 
-            var_dump(sprintf("0x%x %d", $esDescriptor->descriptorTag, $descriptorLen));
-
             $tmp = substr($data, $pointer, $descriptorLen);
             $pointer += $descriptorLen;
             switch ($esDescriptor->descriptorTag) {
@@ -77,9 +75,7 @@ trait Descriptor
     }
 
     protected function bitrateDescriptor($data) {
-        var_dump(strlen($data));
         $tmp = unpack('C1a/n1b', $data);
-        var_dump($tmp);
         $result = [
             'maximum_bitrate' => ($tmp['a'] << 16 | $tmp['b']) & 0x3fffff,
         ];
