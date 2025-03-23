@@ -36,17 +36,11 @@ class PtmEsStream
      */
     public $streamType;
 
-    /**
-     * @var int
-     */
-    public $descriptorTag;
-
     public $descriptors = [];
 
     public function __toString()
     {
         $str = sprintf("%d %s\n", $this->streamType, EsType::desc($this->streamType));
-        $str .= sprintf("%d %s\n", $this->descriptorTag, ProgramEsDescriptorTag::desc($this->descriptorTag));
         foreach ($this->descriptors as $descriptor) {
             $str .= "{$descriptor}\n";
         }

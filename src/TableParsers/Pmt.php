@@ -112,17 +112,13 @@ class Pmt implements TableParserInterface
                 $es->streamType = $elementaryStreamHeaderArray['st'];
 
                 $pid = $elementaryStreamHeaderArray['headers1'] & 0x1FFF;
-                if ($descriptorsLen = $elementaryStreamHeaderArray['headers2'] & 0x3FF) {
-                    // Descriptor info data
-                    $descriptorBin = substr($data, $currentPointer, $descriptorsLen);
-                    $currentPointer += $descriptorsLen;
+                $descriptorsLen = $elementaryStreamHeaderArray['headers2'] & 0x3FF;
 
-                    $es->descriptorTag = unpack('C', $descriptorBin[0])[1];
-                    $descriptorLength = unpack('C', $descriptorBin[1])[1];
+                // Descriptor info data
+                $descriptorsBin = substr($data, $currentPointer, $descriptorsLen);
+                $currentPointer += $descriptorsLen;
 
-                    $tmp = substr($descriptorBin, 2, $descriptorLength);
-                    $es->descriptors[] = $this->parseDescriptor($es->descriptorTag, $tmp);
-                }
+                $es->descriptors = $this->parseDescriptors($descriptorsBin);
 
                 $pmt->streams[$pid] = $es;
             }

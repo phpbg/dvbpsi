@@ -33,18 +33,38 @@ trait Descriptor
     /**
      * @param $tag
      * @param $data
-     * @return PtmEsDescriptor
+     * @return PtmEsDescriptor[]
      */
-    protected function parseDescriptor($tag, $data) {
-        $esDescriptor = new PtmEsDescriptor();
-        $esDescriptor->descriptorTag = $tag;
-        switch ($tag) {
-            // 0x0a ISO 639 language and audio type
-            case 10:
-                $esDescriptor->properties = $this->languageDescriptor($data);
-                break;
+    protected function parseDescriptors($data) {
+        $result = [];
+        $pointer = 0;
+        $dataLen = strlen($data);
+
+        while ($pointer < $dataLen) {
+            $esDescriptor = new PtmEsDescriptor();
+            $esDescriptor->descriptorTag = unpack('C', substr($data, $pointer, 1))[1];
+            $pointer += 1;
+
+            $descriptorLen = unpack('C', substr($data, $pointer, 1))[1];
+            $pointer += 1;
+
+            var_dump(sprintf("0x%x %d", $esDescriptor->descriptorTag, $descriptorLen));
+
+            $tmp = substr($data, $pointer, $descriptorLen);
+            $pointer += $descriptorLen;
+            switch ($esDescriptor->descriptorTag) {
+                // 0x0a ISO 639 language and audio type
+                case 10:
+                    $esDescriptor->properties = $this->languageDescriptor($tmp);
+                    break;
+                // 0x0E Maximum bit rate
+                case 14:
+                    $esDescriptor->properties = $this->bitrateDescriptor($tmp);
+                    break;
+            }
+            $result[] = $esDescriptor;
         }
-        return $esDescriptor;
+        return $result;
     }
 
     protected function languageDescriptor($data) {
@@ -55,4 +75,15 @@ trait Descriptor
         ];
         return $result;
     }
+
+    protected function bitrateDescriptor($data) {
+        var_dump(strlen($data));
+        $tmp = unpack('C1a/n1b', $data);
+        var_dump($tmp);
+        $result = [
+            'maximum_bitrate' => ($tmp['a'] << 16 | $tmp['b']) & 0x3fffff,
+        ];
+        return $result;
+    }
+
 }
