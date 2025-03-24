@@ -70,13 +70,13 @@ class Sdt extends TableParserAbstract
         $sdt->versionNumber = ($tmp >> 1) & 0x1f;
         $sdt->currentNextIndicator = $tmp & 0x01;
 
-        $sectionNumber = unpack('C', $data[$currentPointer])[1];
+        $sdt->sectionNumber = unpack('C', $data[$currentPointer])[1];
         $currentPointer += 1;
 
-        $lastSectionNumber = unpack('C', $data[$currentPointer])[1];
+        $sdt->lastSectionNumber = unpack('C', $data[$currentPointer])[1];
         $currentPointer += 1;
 
-        $originalNetworkId = unpack('n', substr($data, $currentPointer, 2))[1];
+        $sdt->originalNetworkId = unpack('n', substr($data, $currentPointer, 2))[1];
         $currentPointer += 3;
         while ($currentPointer < $crcOffset) {
             $sdtService = new SdtService();

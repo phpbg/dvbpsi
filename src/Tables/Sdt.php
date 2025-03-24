@@ -34,14 +34,14 @@ namespace PhpBg\DvbPsi\Tables;
 class Sdt
 {
     /**
-     * The table id the eit belongs to
+     * The table id the sdt belongs to
      * @see \PhpBg\DvbPsi\Tables\Identifier
      * @var int
      */
     public $tableId;
 
     /**
-     * This is a 16-bit field which serves as a label for identification of the TS, about which the EIT
+     * This is a 16-bit field which serves as a label for identification of the TS, about which the SDT
      * informs, from any other multiplex within the delivery system.
      * @var int
      */
