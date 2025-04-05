@@ -29,6 +29,7 @@ namespace PhpBg\DvbPsi;
 use PhpBg\DvbPsi\TableParsers\Eit;
 use PhpBg\DvbPsi\TableParsers\Nit;
 use PhpBg\DvbPsi\TableParsers\Pat;
+use PhpBg\DvbPsi\TableParsers\Sdt;
 use PhpBg\DvbPsi\TableParsers\Tdt;
 
 class ParserFactory
@@ -44,6 +45,7 @@ class ParserFactory
         $parser->registerTableParser(new Nit());
         $parser->registerTableParser(new Tdt());
         $parser->registerTableParser(new Eit());
+        $parser->registerTableParser(new Sdt());
         return $parser;
     }
 }
