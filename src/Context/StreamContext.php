@@ -73,7 +73,7 @@ class StreamContext extends EventEmitter
             || ($this->sdts[$sdt->transportStreamId]->versionNumber !== 0 && $sdt->versionNumber === 0)
         ) {
             $this->sdts[$sdt->transportStreamId] = $sdt;
-            $this->emit('update');
+            $this->emit('sdt-update');
         }
 
     }
@@ -112,6 +112,13 @@ class StreamContext extends EventEmitter
                 $str .= "PMTs\n";
                 foreach ($this->pmts as $pmt) {
                     $str .= "$pmt\n";
+                }
+            }
+
+            if (!empty($this->sdts)) {
+                $str .= "SDTs\n";
+                foreach ($this->sdts as $sdt) {
+                    $str .= "$sdt\n";
                 }
             }
         }
