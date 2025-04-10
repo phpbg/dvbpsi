@@ -73,7 +73,7 @@ class StreamContext extends EventEmitter
             || ($this->sdts[$sdt->transportStreamId]->versionNumber !== 0 && $sdt->versionNumber === 0)
         ) {
             $this->sdts[$sdt->transportStreamId] = $sdt;
-            $this->emit('sdt-update');
+            $this->emit('sdt-update', [$sdt]);
         }
 
     }
@@ -82,7 +82,7 @@ class StreamContext extends EventEmitter
     {
         if (!isset($this->pmts[$pmt->programNumber]) || $this->pmts[$pmt->programNumber]->version < $pmt->version || ($this->pmts[$pmt->programNumber]->version !== 0 && $pmt->version === 0)) {
             $this->pmts[$pmt->programNumber] = $pmt;
-            $this->emit('pmt-update');
+            $this->emit('pmt-update', [$pmt]);
 
             $programsCount = count($this->pat->programs);
             if (isset($this->pat->programs[0])) {
