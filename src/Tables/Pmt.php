@@ -84,7 +84,7 @@ class Pmt
         $buf .= "Streams:\n";
         $buf .= "\tPID > Elementary stream descriptor\n";
         foreach ($this->streams as $pid => $esDescriptor) {
-            $buf .= sprintf("\t%d (0x%x) > ??? TODO ???\n", $pid, $pid);
+            $buf .= sprintf("\t%d (0x%x) > %s\n", $pid, $pid, $esDescriptor);
         }
 
         return $buf;

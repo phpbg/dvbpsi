@@ -34,6 +34,7 @@ use PhpBg\DvbPsi\Descriptors\NetworkName;
 use PhpBg\DvbPsi\Descriptors\ParentalRating;
 use PhpBg\DvbPsi\Descriptors\PrivateDataSpecifier;
 use PhpBg\DvbPsi\Descriptors\PrivateDescriptors\EACEM\LogicalChannel;
+use PhpBg\DvbPsi\Descriptors\ServiceDescriptor;
 use PhpBg\DvbPsi\Descriptors\ServiceList;
 use PhpBg\DvbPsi\Descriptors\ShortEvent;
 use PhpBg\DvbPsi\Descriptors\TerrestrialDeliverySystem;
@@ -142,6 +143,8 @@ abstract class TableParserAbstract implements TableParserInterface
             case Identifier::CONTENT_DESCRIPTOR:
                 return new Content($descriptorData);
 
+            case Identifier::SERVICE_DESCRIPTOR:
+                return new ServiceDescriptor($descriptorData);
 
             // Private descriptors
             case 0x83:

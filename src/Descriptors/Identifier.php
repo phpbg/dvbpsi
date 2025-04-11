@@ -37,6 +37,7 @@ class Identifier extends Enum
     const NETWORK_NAME_DESCRIPTOR = 0x40;
     const SERVICE_LIST_DESCRIPTOR = 0x41;
     const STUFFING_DESCRIPTOR = 0x42;
+    const SERVICE_DESCRIPTOR = 0x48;
     const LINKAGE_DESCRIPTOR = 0x4a;
     const SHORT_EVENT_DESCRIPTOR = 0x4d;
     const EXTENDED_EVENT_DESCRIPTOR = 0x4e;

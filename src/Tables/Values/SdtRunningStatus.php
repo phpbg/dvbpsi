@@ -3,7 +3,7 @@
 /**
  * MIT License
  *
- * Copyright (c) 2018 Samuel CHEMLA
+ * Copyright (c) 2019 Samuel CHEMLA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,28 +24,20 @@
  * SOFTWARE.
  */
 
-namespace PhpBg\DvbPsi;
+namespace PhpBg\DvbPsi\Tables\Values;
 
-use PhpBg\DvbPsi\TableParsers\Eit;
-use PhpBg\DvbPsi\TableParsers\Nit;
-use PhpBg\DvbPsi\TableParsers\Pat;
-use PhpBg\DvbPsi\TableParsers\Sdt;
-use PhpBg\DvbPsi\TableParsers\Tdt;
 
-class ParserFactory
+use MyCLabs\Enum\Enum;
+
+/**
+ * RunningStatus of an EIT event
+ */
+class SdtRunningStatus extends Enum
 {
-    /**
-     * @return Parser
-     * @throws Exception
-     */
-    public static function create(): Parser
-    {
-        $parser = new Parser();
-        $parser->registerTableParser(new Pat());
-        $parser->registerTableParser(new Nit());
-        $parser->registerTableParser(new Tdt());
-        $parser->registerTableParser(new Eit());
-        $parser->registerTableParser(new Sdt());
-        return $parser;
-    }
+    const UNDEFINED = 0;
+    const NOT_RUNNING = 1;
+    const STARTS_IN_A_FEW_SECONDS = 2;
+    const PAUSING = 3;
+    const RUNNING = 4;
+    const SERVICE_OFF_AIR = 5;
 }

@@ -24,28 +24,23 @@
  * SOFTWARE.
  */
 
-namespace PhpBg\DvbPsi;
+namespace PhpBg\DvbPsi\Tables;
 
-use PhpBg\DvbPsi\TableParsers\Eit;
-use PhpBg\DvbPsi\TableParsers\Nit;
-use PhpBg\DvbPsi\TableParsers\Pat;
-use PhpBg\DvbPsi\TableParsers\Sdt;
-use PhpBg\DvbPsi\TableParsers\Tdt;
-
-class ParserFactory
+class PtmEsDescriptor
 {
     /**
-     * @return Parser
-     * @throws Exception
+     * @var int
      */
-    public static function create(): Parser
+    public $descriptorTag;
+
+    public $properties = [];
+
+    public function __toString()
     {
-        $parser = new Parser();
-        $parser->registerTableParser(new Pat());
-        $parser->registerTableParser(new Nit());
-        $parser->registerTableParser(new Tdt());
-        $parser->registerTableParser(new Eit());
-        $parser->registerTableParser(new Sdt());
-        return $parser;
+        $str = '';
+        foreach ($this->properties as $key => $value) {
+            $str .= sprintf("%s => %s\n", $key, $value);
+        }
+        return $str;
     }
 }

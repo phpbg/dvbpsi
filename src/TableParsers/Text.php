@@ -131,6 +131,6 @@ trait Text
             throw new Exception("Encoding invalid");
         }
 
-        return iconv($encoding, 'UTF-8', substr($string, $stringPointer));
+        return @iconv($encoding, 'UTF-8', substr($string, $stringPointer))?:$encoding;
     }
 }

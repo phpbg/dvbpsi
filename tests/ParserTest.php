@@ -32,12 +32,13 @@ use PhpBg\DvbPsi\Descriptors\TerrestrialDeliverySystem;
 use PhpBg\DvbPsi\Parser;
 use PhpBg\DvbPsi\ParserFactory;
 use PhpBg\DvbPsi\TableParsers\Pmt;
+use PhpBg\DvbPsi\TableParsers;
 use PhpBg\DvbPsi\TableParsers\TableParserInterface;
 use PhpBg\DvbPsi\Tables\Eit;
 use PhpBg\DvbPsi\Tables\Nit;
 use PhpBg\DvbPsi\Tables\NitTs;
 use PhpBg\DvbPsi\Tables\Pat;
-
+use PhpBg\DvbPsi\Tables\Sdt;
 /**
  * For all tests use wireshark to inspect data samples and check expected values
  */
@@ -292,5 +293,52 @@ class ParserTest extends TestCase
 
         $this->assertInstanceOf(LogicalChannel::class, $lcn);
         $this->assertSame(5, count($lcn->services));
+    }
+
+    public function testParseSdt()
+    {
+        $data = $this->getTestFileContent('2_mpegts_sdt_packets.ts');
+
+        $mpegTsParser = new \PhpBg\MpegTs\Parser();
+        $mpegTsParser->filterAllPids = true;
+
+        $dvbPsiParser = ParserFactory::create();
+        $sdtParser = new TableParsers\Sdt();
+        $dvbPsiParser->registerTableParser($sdtParser);
+
+        $dvbPsiParser->on('error', function ($e) {
+            $this->assertTrue(false);
+        });
+        $incomingSdt = null;
+        $dvbPsiParser->on('sdt', function ($sdt) use (&$incomingSdt) {
+            if ($incomingSdt !== null) {
+                throw new \Exception('Only one sdt is expected');
+            }
+            $incomingSdt = $sdt;
+        });
+        $mpegTsParser->on('error', function ($e) {
+            $this->assertTrue(false);
+        });
+        $mpegTsParser->on('pes', function ($pid, $data) use ($dvbPsiParser) {
+            $dvbPsiParser->write($pid, $data);
+        });
+
+        $mpegTsParser->write($data);
+
+        $this->assertInstanceOf(Sdt::class, $incomingSdt);
+        $this->assertSame(34, $incomingSdt->transportStreamId);
+        $this->assertSame(65280, $incomingSdt->originalNetworkId);
+        $this->assertSame(2, $incomingSdt->versionNumber);
+        $this->assertSame(1, $incomingSdt->currentNextIndicator);
+        $this->assertSame(0, $incomingSdt->sectionNumber);
+        $this->assertSame(0, $incomingSdt->lastSectionNumber);
+        $this->assertSame(1115, $incomingSdt->services[0]->serviceId);
+        $this->assertSame(0, $incomingSdt->services[0]->eitScheduleFlag);
+        $this->assertSame(0, $incomingSdt->services[0]->eitPresentFollowingFlag);
+        $this->assertSame(4, $incomingSdt->services[0]->runningStatus);
+        $this->assertSame(0, $incomingSdt->services[0]->freeCaMode);
+        $this->assertSame(0x19, $incomingSdt->services[0]->descriptors[0]->serviceType->getValue());
+        $this->assertSame('EDMR', $incomingSdt->services[0]->descriptors[0]->serviceProviderName);
+        $this->assertSame('VEXEHD', $incomingSdt->services[0]->descriptors[0]->serviceName);
     }
 }

@@ -30,6 +30,7 @@ namespace PhpBg\DvbPsi\Context;
 use Evenement\EventEmitter;
 use PhpBg\DvbPsi\Tables\Pat;
 use PhpBg\DvbPsi\Tables\Pmt;
+use PhpBg\DvbPsi\Tables\Sdt;
 
 class StreamContext extends EventEmitter
 {
@@ -49,6 +50,12 @@ class StreamContext extends EventEmitter
      */
     public $pmts;
 
+    /**
+     * @var Sdt[]
+     */
+    public $sdts;
+
+
     public function addPat(Pat $pat)
     {
         if (!isset($this->pat) || $this->pat->version < $pat->version || ($this->pat->version !== 0 && $pat->version === 0)) {
@@ -59,11 +66,23 @@ class StreamContext extends EventEmitter
         }
     }
 
+    public function addSdt(Sdt $sdt)
+    {
+        if (!isset($this->sdts[$sdt->transportStreamId])
+            || $this->sdts[$sdt->transportStreamId]->versionNumber < $sdt->versionNumber
+            || ($this->sdts[$sdt->transportStreamId]->versionNumber !== 0 && $sdt->versionNumber === 0)
+        ) {
+            $this->sdts[$sdt->transportStreamId] = $sdt;
+            $this->emit('sdt-update', [$sdt]);
+        }
+
+    }
+
     public function addPmt(Pmt $pmt)
     {
         if (!isset($this->pmts[$pmt->programNumber]) || $this->pmts[$pmt->programNumber]->version < $pmt->version || ($this->pmts[$pmt->programNumber]->version !== 0 && $pmt->version === 0)) {
             $this->pmts[$pmt->programNumber] = $pmt;
-            $this->emit('pmt-update');
+            $this->emit('pmt-update', [$pmt]);
 
             $programsCount = count($this->pat->programs);
             if (isset($this->pat->programs[0])) {
@@ -93,6 +112,13 @@ class StreamContext extends EventEmitter
                 $str .= "PMTs\n";
                 foreach ($this->pmts as $pmt) {
                     $str .= "$pmt\n";
+                }
+            }
+
+            if (!empty($this->sdts)) {
+                $str .= "SDTs\n";
+                foreach ($this->sdts as $sdt) {
+                    $str .= "$sdt\n";
                 }
             }
         }

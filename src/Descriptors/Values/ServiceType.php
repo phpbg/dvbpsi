@@ -72,6 +72,6 @@ class ServiceType extends Enum
         if ($value < 0 || $value > 0xff) {
             throw new Exception("Invalid service type value: $value");
         }
-        $this->value = $value;
+        parent::__construct($value);
     }
 }

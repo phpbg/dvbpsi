@@ -24,28 +24,26 @@
  * SOFTWARE.
  */
 
-namespace PhpBg\DvbPsi;
+namespace PhpBg\DvbPsi\Tables;
 
-use PhpBg\DvbPsi\TableParsers\Eit;
-use PhpBg\DvbPsi\TableParsers\Nit;
-use PhpBg\DvbPsi\TableParsers\Pat;
-use PhpBg\DvbPsi\TableParsers\Sdt;
-use PhpBg\DvbPsi\TableParsers\Tdt;
+use PhpBg\DvbPsi\Descriptors\Values\EsType;
+use PhpBg\DvbPsi\Descriptors\Values\ProgramEsDescriptorTag;
 
-class ParserFactory
+class PtmEsStream
 {
     /**
-     * @return Parser
-     * @throws Exception
+     * @var int
      */
-    public static function create(): Parser
+    public $streamType;
+
+    public $descriptors = [];
+
+    public function __toString()
     {
-        $parser = new Parser();
-        $parser->registerTableParser(new Pat());
-        $parser->registerTableParser(new Nit());
-        $parser->registerTableParser(new Tdt());
-        $parser->registerTableParser(new Eit());
-        $parser->registerTableParser(new Sdt());
-        return $parser;
+        $str = sprintf("%d %s\n", $this->streamType, EsType::desc($this->streamType));
+        foreach ($this->descriptors as $descriptor) {
+            $str .= "{$descriptor}\n";
+        }
+        return $str;
     }
 }
